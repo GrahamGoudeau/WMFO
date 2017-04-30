@@ -1,0 +1,22 @@
+{
+    "compilerOptions": {
+        "target": "es6",
+        "module": "commonjs",
+        "emitDecoratorMetadata": true,
+        "experimentalDecorators": true,
+        "inlineSourceMap": true,
+        "noEmitOnError": true,
+        "noUnusedLocals": true,
+        "noImplicitAny": true,
+        "noImplicitReturns": true,
+        "noUnusedParameters": true,
+        "pretty": true
+    },
+    "exclude": [
+        "node_modules",
+        "client"
+    ],
+    "typeRoots": [
+        "node_modules/@types"
+    ]
+}

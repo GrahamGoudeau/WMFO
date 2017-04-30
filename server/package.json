@@ -1,0 +1,33 @@
+{
+  "name": "WMFO",
+  "version": "1.0.0",
+  "description": "",
+  "main": "ts-node index.ts",
+  "scripts": {
+    "test": "env $(cat .env) ts-node node_modules/jasmine/bin/jasmine.js spec/*.ts",
+    "dev": "env $(cat .env) nodemon -e js --exec 'ts-node' index.ts",
+    "build": "tsc",
+    "watch": "tsc -w",
+    "serve": "ts-node index.ts"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "jasmine": "^2.5.2",
+    "nodemon": "^1.11.0"
+  },
+  "dependencies": {
+    "@types/body-parser": "0.0.33",
+    "@types/express": "^4.0.34",
+    "@types/jasmine": "^2.5.38",
+    "@types/node": "^6.0.51",
+    "@types/pg-promise": "0.0.28",
+    "body-parser": "^1.15.2",
+    "express": "^4.14.0",
+    "pg-promise": "^5.5.6",
+    "ts-node": "^1.7.0",
+    "tsmonad": "0.6.1",
+    "typescript": "^2.1.4"
+  }
+}
