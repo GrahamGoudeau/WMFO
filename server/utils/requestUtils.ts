@@ -1,15 +1,20 @@
 import * as express from 'express';
 import { defaults } from './functionalUtils';
 
-export enum PermissionLevel {
-    DJ,
-    EXEC
-}
+export type PermissionLevel =
+    'DJ' |
+    'GENERAL_MANAGER' |
+    'ASSISTANT_GENERAL_MANAGER' |
+    'OPERATIONS_DIRECTOR' |
+    'PROGRAMMING_DIRECTOR' |
+    'SCHEDULING_COORDINATOR' |
+    'VOLUNTEER_COORDINATOR' |
+    'WEBMASTER';
 
 export interface AuthToken {
     email: string,
     authorizedAt: Date,
-    permissionLevel: PermissionLevel
+    permissionLevels: PermissionLevel[]
 }
 
 export interface WMFOResponse {

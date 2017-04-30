@@ -66,10 +66,18 @@ export class RouteManager {
 
             authTokenResult.caseOf({
                 just: async (token: AuthToken) => {
-                    if (!security.validateAuthToken(token) || token.permissionLevel !== route.permissionLevel) {
+                    if (!security.validateAuthToken(token)) {
                         unauthorizedCont();
                     } else {
-                        route.cont(req, res, token);
+                        const hasPermission: boolean = token.permissionLevels.reduce((acc, permissionLevel) => {
+                            return acc || route.permissionLevels.indexOf(permissionLevel) !== -1;
+                        }, false);
+
+                        if (hasPermission || route.permissionLevels.indexOf('WEBMASTER') !== -1) {
+                            route.cont(req, res, token);
+                        } else {
+                            unauthorizedCont();
+                        }
                     }
                 },
                 nothing: async () => {
@@ -104,7 +112,7 @@ export class InsecureRouteBuilder extends RouteBuilder {
 }
 
 export class SecureRouteBuilder extends RouteBuilder {
-    constructor(readonly route: string, readonly cont: SecureContinuation, readonly permissionLevel: PermissionLevel) {
+    constructor(readonly route: string, readonly cont: SecureContinuation, readonly permissionLevels: PermissionLevel[]) {
         super(route);
     }
 }
@@ -118,7 +126,7 @@ class Route {
         }
 
         if (!isAjax) {
-            this.isAjax = false;
+            this.isAjax = true;
         }
     }
 };
@@ -133,10 +141,10 @@ export class InsecureRoute extends Route {
 
 export class SecureRoute extends Route {
     readonly cont: SecureContinuation;
-    readonly permissionLevel: PermissionLevel;
+    readonly permissionLevels: PermissionLevel[];
     constructor(builder: SecureRouteBuilder) {
         super(builder.route, builder.httpMethod, builder.isAjax);
         this.cont = builder.cont;
-        this.permissionLevel = builder.permissionLevel;
+        this.permissionLevels = builder.permissionLevels;
     }
 }

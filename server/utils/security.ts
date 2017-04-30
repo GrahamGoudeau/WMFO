@@ -46,11 +46,11 @@ export function hashPassword(salt: string, password: string): string {
     }
 }
 
-export function buildAuthToken(email: string, permissionLevel: PermissionLevel): string {
+export function buildAuthToken(email: string, permissionLevels: PermissionLevel[]): string {
     const token: AuthToken = {
         email: email,
         authorizedAt: new Date(),
-        permissionLevel: permissionLevel
+        permissionLevels: permissionLevels
     };
 
     return encrypt(JSON.stringify(token));
@@ -80,7 +80,7 @@ export function parseCookie(cookie: string): Maybe<AuthToken> {
         const result: AuthToken = {
             email: deserializedResult.email,
             authorizedAt: new Date(deserializedResult.authorizedAt),
-            permissionLevel: deserializedResult.permissionLevel
+            permissionLevels: deserializedResult.permissionLevels
         };
 
         return Maybe.just(result);
