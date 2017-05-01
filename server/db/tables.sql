@@ -1,5 +1,6 @@
 CREATE TYPE permission_level_e AS ENUM (
-    'DJ',
+    'STUDENT_DJ',
+    'COMMUNITY_DJ',
     'GENERAL_MANAGER',
     'ASSISTANT_GENERAL_MANAGER',
     'OPERATIONS_DIRECTOR',
@@ -19,6 +20,7 @@ CREATE TYPE day_of_week_e AS ENUM (
     'SUNDAY'
 );
 
+/* show forms between agreement posted and due date we set */
 CREATE TABLE agreements_t (
     agreement_text TEXT CHECK (COALESCE(agreement_text, '') <> ''),
     date_created TIMESTAMP NOT NULL DEFAULT NOW(),

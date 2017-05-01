@@ -2,7 +2,8 @@ import * as express from 'express';
 import { defaults } from './functionalUtils';
 
 export type PermissionLevel =
-    'DJ' |
+    'COMMUNITY_DJ' |
+    'STUDENT_DJ' |
     'GENERAL_MANAGER' |
     'ASSISTANT_GENERAL_MANAGER' |
     'OPERATIONS_DIRECTOR' |
