@@ -7,4 +7,4 @@ INSERT INTO community_members_t VALUES (
     DEFAULT,
     $5,
     DEFAULT
-);
+) RETURNING id;
