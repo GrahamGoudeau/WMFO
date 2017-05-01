@@ -32,6 +32,7 @@ CREATE TABLE community_members_t (
     first_name VARCHAR(100) CHECK (COALESCE(first_name, '') <> ''),
     last_name VARCHAR(100) CHECK (COALESCE(last_name, '') <> ''),
     email VARCHAR(100) UNIQUE CHECK (COALESCE(email, '') <> ''),
+    password_hash VARCHAR(128) CHECK (COALESCE(password_hash, '') <> ''),
     active BOOLEAN NOT NULL DEFAULT TRUE,
     tufts_id INTEGER DEFAULT NULL CHECK (tufts_id > 0),
     last_agreement_signed INTEGER REFERENCES agreements_t(id) DEFAULT NULL
