@@ -67,16 +67,21 @@ class DJManagement {
     async findByEmailAndPassword(email: HTMLEscapedString,
                                  passwordHash: string): DBAsyncResult<CommunityMemberRecord> {
         try {
-            const data = await this.db.one(this.queries.findByEmailAndPassword, [email.value, passwordHash]);
+            const data = await this.db.many(this.queries.findByEmailAndPassword, [email.value, passwordHash]);
+            const permissionLevels: PermissionLevel[] = [];
+            data.forEach((record: any) => {
+                if (record.permission_level) permissionLevels.push(record.permission_level);
+            });
+
             return Either.Right<ResponseMessage, CommunityMemberRecord>({
-                id: data.id,
-                firstName: data.first_name,
-                lastName: data.last_name,
-                email: data.email,
-                active: data.active,
-                tuftsId: data.tufts_id,
-                lastAgreementSigned: data.last_agreement_signed,
-                permissionLevels: await this.getPermissionLevels(data.id)
+                id: data[0].id,
+                firstName: data[0].first_name,
+                lastName: data[0].last_name,
+                email: data[0].email,
+                active: data[0].active,
+                tuftsId: data[0].tufts_id,
+                lastAgreementSigned: data[0].last_agreement_signed,
+                permissionLevels: permissionLevels
             });
         } catch (e) {
             return Either.Left<ResponseMessage, CommunityMemberRecord>(buildMessage(e, 'login', this.log));
