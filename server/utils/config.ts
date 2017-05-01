@@ -18,6 +18,8 @@ export default class Config {
             'PRODUCTION',
         ],
         stringFields: <string[]>[
+            'DATABASE_URL',
+            'DATABASE_NAME',
         ],
         numberFields: <string[]>[
             'PORT',
