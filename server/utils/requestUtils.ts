@@ -12,6 +12,13 @@ export type PermissionLevel =
     'VOLUNTEER_COORDINATOR' |
     'WEBMASTER';
 
+export type ResponseMessage =
+    'DB_ERROR' |
+    'ALREADY_EXISTS' |
+    'ACCOUNT_DEACTIVATED' |
+    'NOT_FOUND';
+
+
 export interface AuthToken {
     email: string,
     authorizedAt: Date,

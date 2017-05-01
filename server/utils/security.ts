@@ -1,5 +1,5 @@
 import * as crypto from 'crypto';
-import { Maybe } from './maybe';
+import Maybe from './maybe';
 import { AuthToken, PermissionLevel } from './requestUtils';
 import { getAllRegexMatches } from './functionalUtils';
 

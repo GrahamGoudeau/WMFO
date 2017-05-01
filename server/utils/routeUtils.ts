@@ -1,6 +1,6 @@
 import * as express from 'express';
 import * as security from './security';
-import { Maybe } from './maybe';
+import Maybe from './maybe';
 import { unauthorizedError, AuthToken, PermissionLevel } from './requestUtils';
 
 type InsecureContinuation = (req: express.Request,

@@ -1,5 +1,10 @@
 import * as fs from 'fs';
 
+export type JSType =
+    'number' |
+    'boolean' |
+    'string';
+
 export function o<A, B, C>(f: (y: B) => C,
                            g: (x: A) => B): (z: A) => C {
     return x => f(g(x));
@@ -39,4 +44,53 @@ export function combineObjects(...objs: any[]): any {
     const result: any = {};
     objs.forEach(x => Object.assign(result, x));
     return result;
+}
+
+export interface KeyShape {
+    type: JSType,
+    validation?: ((value: any) => boolean)[]
+}
+
+export interface RequestShape {
+    [keys: string]: KeyShape
+}
+
+export const COMMON_FIELD_SHAPES: any = {
+    nonemptyString: { type: 'string', validation: [(s: string) => s.length > 0]},
+    email: { type: 'string', validation: [
+            (s: string) => s.length > 0,
+            (s: string) => s.indexOf('@') !== -1,
+            (s: string) => s.indexOf('.') !== -1
+        ] },
+};
+
+export function validateKeys(obj: any, requestShape: RequestShape): boolean {
+    if (!obj) return false;
+
+    return Object.keys(requestShape).reduce((acc, key) => {
+        if (acc && obj[key] != null
+                && typeof obj[key] === requestShape[key].type) {
+            if (requestShape[key].validation) {
+                return requestShape[key].validation.every(f => f(obj[key]));
+            }
+            return true;
+        }
+        return false;
+    }, true);
+}
+
+export class HTMLEscapedString {
+    private readonly _value: string;
+    constructor(unescapedString: string) {
+        this._value = HTMLEscapedString.escapeHTML(unescapedString);
+    }
+
+    get value() { return this._value; }
+
+    private static escapeHTML(s: string): string { 
+        return s.replace(/&/g, '&amp;')
+            .replace(/"/g, '&quot;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;');
+    }
 }
