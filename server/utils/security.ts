@@ -17,7 +17,7 @@ export function encrypt(text: string): string {
 
         return encrypted + cipher.final(formatBinary);
     } catch (e) {
-        console.log('crypto error in encrypt', e.message);
+        console.trace('crypto error in encrypt', e.message);
         throw e;
     }
 }
