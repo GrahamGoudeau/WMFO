@@ -3,8 +3,8 @@ import Logger from '../utils/logger';
 import DB from '../db/db';
 import { CommunityMemberRecord, DBResult } from '../db/db';
 import { HTMLEscapedString, COMMON_FIELD_SHAPES, validateKeys } from '../utils/functionalUtils';
-import { ResponseMessage, badRequest, jsonResponse, successResponse } from '../utils/requestUtils';
-import { hashPassword } from '../utils/security';
+import { PermissionLevel, ResponseMessage, badRequest, jsonResponse, successResponse } from '../utils/requestUtils';
+import { buildAuthToken, hashPassword } from '../utils/security';
 
 const log: Logger = new Logger('dj');
 const db: DB = DB.getInstance();
@@ -19,17 +19,16 @@ export async function handleLogin(req: express.Request,
         return;
     }
     try {
-
-        console.log('body:', body);
         const result: DBResult<CommunityMemberRecord> = await db.dj.findByEmailAndPassword(new HTMLEscapedString(body.email),
                                                                                        hashPassword(body.email, body.password));
         result.caseOf({
             left: e => badRequest(res, e),
             right: c => jsonResponse(res, {
                 userData: c,
-                authToken: {}
+                authToken: buildAuthToken(c.email, c.permissionLevels)
             })
         });
+
         return;
     } catch (e) {
         log.ERROR(e);
@@ -48,15 +47,20 @@ export async function handleRegister(req: express.Request,
         badRequest(res);
         return;
     }
-    const result: DBResult<boolean> = await db.dj.register(
+
+    const result: DBResult<number> = await db.dj.register(
         new HTMLEscapedString(body.firstName),
         new HTMLEscapedString(body.lastName),
         new HTMLEscapedString(body.email),
         hashPassword(body.email, body.password));
 
-    result.caseOf({
-        left: (e: ResponseMessage) => badRequest(res, e),
-        right: (_: boolean) => successResponse(res)
+    await result.caseOf({
+        left: async (e: ResponseMessage) => badRequest(res, e),
+        right: async (id: number) => {
+            const permissions: PermissionLevel[] = await db.dj.getPermissionLevels(id);
+            jsonResponse(res, {
+                authToken: buildAuthToken(new HTMLEscapedString(body.email).value, permissions)
+            });
+        }
     });
-    new HTMLEscapedString(body.firstName);
 }

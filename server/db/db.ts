@@ -59,19 +59,14 @@ class DJManagement {
     private readonly log = new Logger('dj-management');
     constructor(private readonly db: pgpLib.IDatabase<any>) {}
 
-    async getPermissionLevels(communityMemberId: number): DBAsyncResult<PermissionLevel[]> {
-        try {
-            const data = await this.db.any(this.queries.getPermissionLevels, [communityMemberId]);
-            return Either.Right<ResponseMessage, PermissionLevel[]>(data);
-        } catch (e) {
-            return Either.Left<ResponseMessage, PermissionLevel[]>(buildMessage(e, 'get permission levels', this.log));
-        }
+    async getPermissionLevels(communityMemberId: number): Promise<PermissionLevel[]> {
+        const data = await this.db.any(this.queries.getPermissionLevels, [communityMemberId]);
+        return data.map((obj: any) => obj.permission_level);
     }
 
     async findByEmailAndPassword(email: HTMLEscapedString,
                                  passwordHash: string): DBAsyncResult<CommunityMemberRecord> {
         try {
-            console.log('looking:', email.value, passwordHash);
             const data = await this.db.one(this.queries.findByEmailAndPassword, [email.value, passwordHash]);
             return Either.Right<ResponseMessage, CommunityMemberRecord>({
                 id: data.id,
@@ -81,7 +76,7 @@ class DJManagement {
                 active: data.active,
                 tuftsId: data.tufts_id,
                 lastAgreementSigned: data.last_agreement_signed,
-                permissionLevels: await this.getPermissionLevels(data.id) as any
+                permissionLevels: await this.getPermissionLevels(data.id)
             });
         } catch (e) {
             return Either.Left<ResponseMessage, CommunityMemberRecord>(buildMessage(e, 'login', this.log));
@@ -92,18 +87,18 @@ class DJManagement {
                    lastName: HTMLEscapedString,
                    email: HTMLEscapedString,
                    passwordHash: string,
-                   tuftsId?: number): DBAsyncResult<boolean> {
+                   tuftsId?: number): DBAsyncResult<number> {
         try {
-            await this.db.none(this.queries.register,
+            const idResult = await this.db.one(this.queries.register,
                      [firstName.value,
                       lastName.value,
                       email.value,
                       passwordHash,
                       tuftsId ? tuftsId : null]);
 
-            return Either.Right<ResponseMessage, boolean>(true);
+            return Either.Right<ResponseMessage, number>(idResult.id);
         } catch (e) {
-            return Either.Left<ResponseMessage, boolean>(buildMessage(e, 'registration', this.log));
+            return Either.Left<ResponseMessage, number>(buildMessage(e, 'registration', this.log));
         }
     }
 }
