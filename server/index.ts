@@ -17,7 +17,7 @@ const app: express.Express = express();
 app.use(bodyParser.urlencoded({extended: true}));
 app.use(bodyParser.json());
 const clientDir: string = `${__dirname}/../client/dist/`;
-app.use('/static/', express.static(path.resolve(clientDir)));
+app.use('/dist/', express.static(path.resolve(clientDir)));
 
 const CONFIG: Config = Config.getInstance();
 DB.getInstance();
@@ -75,6 +75,10 @@ const secureRoutes: SecureRoute[] = [
 
 routeManager.addInsecureRoutes(insecureRoutes);
 routeManager.addSecureRoutes(secureRoutes);
+
+app.get('/*', (_, res: express.Response) => {
+    res.sendFile(path.resolve(`${clientDir}/../index.html`));
+});
 const port = CONFIG.getNumberConfig('PORT');
 app.listen(port);
 log.INFO(`Listening on port ${port}`);
