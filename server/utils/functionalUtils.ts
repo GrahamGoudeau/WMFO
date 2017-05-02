@@ -62,20 +62,24 @@ export const COMMON_FIELD_SHAPES: any = {
             (s: string) => s.indexOf('@') !== -1,
             (s: string) => s.indexOf('.') !== -1
         ] },
+    dateString: { type: 'string', validation: [(s: string) => dateRegex.test(s)] },
+    num: { type: 'number' },
+    nonnegativeNum: { type: 'number', validation: [(n: number) => n >= 0] },
 };
 
 export function validateKeys(obj: any, requestShape: RequestShape): boolean {
     if (!obj) return false;
 
-    return Object.keys(requestShape).reduce((acc, key) => {
-        if (acc && obj[key] != null
-                && typeof obj[key] === requestShape[key].type) {
-            if (requestShape[key].validation) {
-                return requestShape[key].validation.every(f => f(obj[key]));
+    return Object.keys(obj).length === Object.keys(requestShape).length &&
+        Object.keys(requestShape).reduce((acc, key) => {
+            if (acc && obj[key] != null
+                    && typeof obj[key] === requestShape[key].type) {
+                if (requestShape[key].validation) {
+                    return requestShape[key].validation.every(f => f(obj[key]));
+                }
+                return true;
             }
-            return true;
-        }
-        return false;
+            return false;
     }, true);
 }
 

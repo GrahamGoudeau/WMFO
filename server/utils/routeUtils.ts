@@ -54,8 +54,8 @@ export class RouteManager {
         let method: (string: any, ExpressContinuation: any) => void = this.determineMethod(route.httpMethod);
 
         method(route.route, (req: any, res: any) => {
-            const cookie: string = req.headers['cookie'];
-            const authTokenResult: Maybe<AuthToken> = security.parseCookie(cookie);
+            const headerValue: string = req.headers['x-wmfo-auth'];
+            const authTokenResult: Maybe<AuthToken> = security.parseHeaderValue(headerValue);
             const unauthorizedCont = () => {
                 if (!route.isAjax) {
                     res.redirect(this.loginRoute);
@@ -73,7 +73,7 @@ export class RouteManager {
                             return acc || route.permissionLevels.indexOf(permissionLevel) !== -1;
                         }, false);
 
-                        if (hasPermission || route.permissionLevels.indexOf('WEBMASTER') !== -1) {
+                        if (hasPermission || token.permissionLevels.indexOf('WEBMASTER') !== -1) {
                             route.cont(req, res, token);
                         } else {
                             unauthorizedCont();

@@ -46,9 +46,10 @@ export function hashPassword(salt: string, password: string): string {
     }
 }
 
-export function buildAuthToken(email: string, permissionLevels: PermissionLevel[]): string {
+export function buildAuthToken(email: string, id: number, permissionLevels: PermissionLevel[]): string {
     const token: AuthToken = {
         email: email,
+        id: id,
         authorizedAt: new Date(),
         permissionLevels: permissionLevels
     };
@@ -56,15 +57,13 @@ export function buildAuthToken(email: string, permissionLevels: PermissionLevel[
     return encrypt(JSON.stringify(token));
 }
 
-export function parseCookie(cookie: string): Maybe<AuthToken> {
+export function parseHeaderValue(cookie: string): Maybe<AuthToken> {
     const fail: Maybe<AuthToken> = Maybe.nothing<AuthToken>();
     if (!cookie) {
         return fail;
     }
 
-    const cookiePrelude: string = 'IgetbackAuth=';
-
-    const allMatches: string[] = getAllRegexMatches(cookie, `${cookiePrelude}([a-f0-9]+)`);
+    const allMatches: string[] = getAllRegexMatches(cookie, '([a-f0-9]+)');
 
     // attempt to get the latest cookie added to the session- not great
     const token = allMatches[allMatches.length - 1];
@@ -74,11 +73,12 @@ export function parseCookie(cookie: string): Maybe<AuthToken> {
 
     try {
         const deserializedResult: any = JSON.parse(decrypt(token));
-        if (!deserializedResult.email || !deserializedResult.authorizedAt || !deserializedResult.permissionLevel) {
+        if (!deserializedResult.email || !deserializedResult.id || !deserializedResult.authorizedAt || !deserializedResult.permissionLevels) {
             return fail;
         }
         const result: AuthToken = {
             email: deserializedResult.email,
+            id: deserializedResult.id,
             authorizedAt: new Date(deserializedResult.authorizedAt),
             permissionLevels: deserializedResult.permissionLevels
         };
@@ -93,7 +93,7 @@ export function parseCookie(cookie: string): Maybe<AuthToken> {
 }
 
 export async function validateCookie(cookie: string): Promise<boolean> {
-    const tokenResult: Maybe<AuthToken> = parseCookie(cookie);
+    const tokenResult: Maybe<AuthToken> = parseHeaderValue(cookie);
 
     return tokenResult.caseOf({
         just: (token: AuthToken) => {

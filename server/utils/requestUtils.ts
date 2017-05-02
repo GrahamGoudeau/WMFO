@@ -21,6 +21,7 @@ export type ResponseMessage =
 
 export interface AuthToken {
     email: string,
+    id: number,
     authorizedAt: Date,
     permissionLevels: PermissionLevel[]
 }
