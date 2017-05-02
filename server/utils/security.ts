@@ -106,6 +106,7 @@ export async function validateCookie(cookie: string): Promise<boolean> {
 export function validateAuthToken(token: AuthToken): boolean {
     const currentTime = new Date();
     const oneHour = 3600000;
-    const expiresAt = new Date(token.authorizedAt.getTime() + oneHour);
+    const oneWeek = oneHour * 24 * 7;
+    const expiresAt = new Date(token.authorizedAt.getTime() + oneWeek);
     return expiresAt > currentTime;
 }
