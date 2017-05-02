@@ -1,6 +1,7 @@
 import * as express from 'express';
 import * as bodyParser from 'body-parser';
 import { HttpMethod, RouteManager, InsecureRoute, InsecureRouteBuilder, SecureRoute, SecureRouteBuilder } from './utils/routeUtils';
+import { PermissionLevel } from './utils/requestUtils';
 import Logger from './utils/logger';
 import * as path from 'path';
 import Config from './utils/config';
@@ -27,15 +28,28 @@ const registerRouteBuilder: InsecureRouteBuilder = <InsecureRouteBuilder>new Ins
 const loginRouteBuilder: InsecureRouteBuilder = <InsecureRouteBuilder>new InsecureRouteBuilder('/api/login', DJ.handleLogin)
     .setHttpMethod(HttpMethod.POST);
 
+const logHoursBuilder: SecureRouteBuilder =
+    <SecureRouteBuilder>new SecureRouteBuilder('/api/dj/log',
+                                               DJ.handleLogHours,
+                                               ['COMMUNITY_DJ',
+                                                'STUDENT_DJ'])
+    .setHttpMethod(HttpMethod.POST);
+
 const loginRoute: InsecureRoute = new InsecureRoute(loginRouteBuilder);
 const registerRoute: InsecureRoute = new InsecureRoute(registerRouteBuilder);
+const logHoursRoute: SecureRoute = new SecureRoute(logHoursBuilder);
 
 const insecureRoutes: InsecureRoute[] = [
     registerRoute,
     loginRoute,
 ];
 
+const secureRoutes: SecureRoute[] = [
+    logHoursRoute,
+];
+
 routeManager.addInsecureRoutes(insecureRoutes);
+routeManager.addSecureRoutes(secureRoutes);
 const port = CONFIG.getNumberConfig('PORT');
 app.listen(port);
 log.INFO(`Listening on port ${port}`);
