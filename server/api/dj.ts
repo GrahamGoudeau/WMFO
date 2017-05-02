@@ -3,7 +3,7 @@ import Logger from '../utils/logger';
 import DB from '../db/db';
 import { CommunityMemberRecord, DBResult } from '../db/db';
 import { HTMLEscapedString, COMMON_FIELD_SHAPES, validateKeys } from '../utils/functionalUtils';
-import { PermissionLevel, ResponseMessage, badRequest, jsonResponse, successResponse } from '../utils/requestUtils';
+import { AuthToken, PermissionLevel, ResponseMessage, badRequest, jsonResponse, successResponse } from '../utils/requestUtils';
 import { buildAuthToken, hashPassword } from '../utils/security';
 
 const log: Logger = new Logger('dj');
@@ -25,7 +25,7 @@ export async function handleLogin(req: express.Request,
             left: e => badRequest(res, e),
             right: c => jsonResponse(res, {
                 userData: c,
-                authToken: buildAuthToken(c.email, c.permissionLevels)
+                authToken: buildAuthToken(c.email, c.id, c.permissionLevels)
             })
         });
 
@@ -34,6 +34,23 @@ export async function handleLogin(req: express.Request,
         log.ERROR(e);
     }
     res.send('login');
+}
+
+export async function handleLogHours(req: express.Request,
+                                     res: express.Response,
+                                     authToken: AuthToken): Promise<void> {
+    const body: { volunteerDate: string, // string in mm/dd/yyyy format
+                  numHours: number,
+                  description: string,
+    } = req.body;
+    if (!validateKeys(body, {
+            volunteerDate: COMMON_FIELD_SHAPES.dateString,
+            numHours: COMMON_FIELD_SHAPES.nonnegativeNum,
+            description: COMMON_FIELD_SHAPES.nonemptyString })) {
+        badRequest(res);
+        return;
+    }
+    res.send('log');
 }
 
 export async function handleRegister(req: express.Request,
@@ -59,7 +76,7 @@ export async function handleRegister(req: express.Request,
         right: async (id: number) => {
             const permissions: PermissionLevel[] = await db.dj.getPermissionLevels(id);
             jsonResponse(res, {
-                authToken: buildAuthToken(new HTMLEscapedString(body.email).value, permissions)
+                authToken: buildAuthToken(new HTMLEscapedString(body.email).value, id, permissions)
             });
         }
     });
