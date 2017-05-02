@@ -20,6 +20,11 @@ CREATE TYPE day_of_week_e AS ENUM (
     'SUNDAY'
 );
 
+CREATE TYPE semester_e AS ENUM (
+    'FALL',
+    'SPRING'
+);
+
 /* show forms between agreement posted and due date we set */
 CREATE TABLE agreements_t (
     agreement_text TEXT CHECK (COALESCE(agreement_text, '') <> ''),
@@ -40,9 +45,34 @@ CREATE TABLE community_members_t (
 
 CREATE TABLE show_t (
     id SERIAL PRIMARY KEY,
-    show_name VARCHAR(100) CHECK (COALESCE(show_name, '') <> ''),
+    show_name VARCHAR(100) CHECK (COALESCE(show_name, '') <> '')
+);
+
+CREATE TABLE show_schedule_t (
+    id SERIAL PRIMARY KEY,
+    show_id INTEGER REFERENCES show_t(id) NOT NULL,
     day_of_week day_of_week_e NOT NULL,
-    hour INTEGER CHECK (hour BETWEEN 0 AND 23)
+    does_alternate_weeks BOOLEAN NOT NULL,
+    hour INTEGER CHECK (hour BETWEEN 0 AND 23),
+    exec_approved BOOLEAN NOT NULL DEFAULT FALSE,
+    semester semester_e NOT NULL,
+    year INTEGER CHECK (year > 2000)
+);
+
+CREATE TABLE show_request_t (
+    id SERIAL PRIMARY KEY,
+    show_name VARCHAR(100) CHECK (COALESCE(show_name, '') <> ''),
+    day_of_week day_of_week_e ARRAY NOT NULL,
+    does_alternate_weeks BOOLEAN NOT NULL,
+    hour INTEGER ARRAY NOT NULL,
+    semester_show_airs semester_e NOT NULL,
+    year_show_airs INTEGER CHECK (year_show_airs > 2000)
+);
+
+CREATE TABLE show_request_djs_t (
+    id SERIAL PRIMARY KEY,
+    dj_id INTEGER REFERENCES community_members_t(id),
+    show_request_id INTEGER REFERENCES show_request_t(id)
 );
 
 CREATE TABLE show_owner_relation_t (
