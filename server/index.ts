@@ -1,7 +1,7 @@
 import * as express from 'express';
 import * as bodyParser from 'body-parser';
 import { HttpMethod, RouteManager, InsecureRoute, InsecureRouteBuilder, SecureRoute, SecureRouteBuilder } from './utils/routeUtils';
-import { DJs, EXEC_BOARD, PermissionLevel } from './utils/requestUtils';
+import { DJ_PERMISSIONS, EXEC_BOARD_PERMISSIONS, PermissionLevel } from './utils/requestUtils';
 import Logger from './utils/logger';
 import * as path from 'path';
 import Config from './utils/config';
@@ -40,19 +40,19 @@ const logHoursBuilder: SecureRouteBuilder =
 const getUnconfirmedAccountsBuilder: SecureRouteBuilder =
     <SecureRouteBuilder>new SecureRouteBuilder('/api/exec/getUnconfirmedAccounts',
                                                Exec_api.handleGetUnconfirmedAccounts,
-                                               EXEC_BOARD)
+                                               EXEC_BOARD_PERMISSIONS)
     .setHttpMethod(HttpMethod.POST);
 
 const getUnconfirmedHoursBuilder: SecureRouteBuilder =
     <SecureRouteBuilder>new SecureRouteBuilder('/api/exec/getUnconfirmedHours',
                                                Exec_api.handleGetUnconfirmedHours,
-                                               EXEC_BOARD)
+                                               EXEC_BOARD_PERMISSIONS)
     .setHttpMethod(HttpMethod.POST);
 
 const checkMostRecentAgreementBuilder: SecureRouteBuilder =
     <SecureRouteBuilder>new SecureRouteBuilder('/api/dj/checkMostRecentAgreement',
                                                DJ_api.handleCheckMostRecentAgreement,
-                                               DJs)
+                                               DJ_PERMISSIONS)
     .setHttpMethod(HttpMethod.POST);
 
 const loginRoute: InsecureRoute = new InsecureRoute(loginRouteBuilder);

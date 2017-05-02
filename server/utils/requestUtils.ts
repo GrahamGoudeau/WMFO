@@ -12,7 +12,7 @@ export type PermissionLevel =
     'VOLUNTEER_COORDINATOR' |
     'WEBMASTER';
 
-export const EXEC_BOARD: PermissionLevel[] = [
+export const EXEC_BOARD_PERMISSIONS: PermissionLevel[] = [
     'GENERAL_MANAGER',
     'ASSISTANT_GENERAL_MANAGER',
     'OPERATIONS_DIRECTOR',
@@ -21,7 +21,7 @@ export const EXEC_BOARD: PermissionLevel[] = [
     'VOLUNTEER_COORDINATOR'
 ];
 
-export const DJs: PermissionLevel[] = [
+export const DJ_PERMISSIONS: PermissionLevel[] = [
     'STUDENT_DJ',
     'COMMUNITY_DJ'
 ];
