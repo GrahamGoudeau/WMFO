@@ -86,7 +86,7 @@ class DJManagement {
     async hasSignedMostRecentAgreement(id: number): DBAsyncResult<boolean> {
         try {
             const data = await this.db.one(this.queries.hasSignedMostRecentAgreement, [id]);
-            return data.result;
+            return Either.Right<ResponseMessage, boolean>(data.result);
         } catch (e) {
             return Either.Left<ResponseMessage, boolean>(buildMessage(e, 'check most recent agreement', this.log));
         }

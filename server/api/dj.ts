@@ -30,7 +30,10 @@ export async function handleCheckMostRecentAgreement(req: express.Request,
                                                      res: express.Response,
                                                      authToken: AuthToken): Promise<void> {
     const data: DBResult<boolean> = await db.dj.hasSignedMostRecentAgreement(authToken.id);
-    jsonResponse(res, {
-        hasSignedMostRecentAgreement: data
+    data.caseOf({
+        right: data => jsonResponse(res, {
+                hasSignedMostRecentAgreement: data
+            }),
+        left: e => badRequest(res, e)
     });
 }
