@@ -18,7 +18,8 @@ export default class Config {
             'PRODUCTION',
         ],
         stringFields: <string[]>[
-            'DATABASE_URL',
+            'DEV_DATABASE_URL',
+            'PROD_DATABASE_URL',
             'DATABASE_NAME',
         ],
         numberFields: <string[]>[
