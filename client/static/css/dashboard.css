@@ -1,0 +1,94 @@
+body {
+    background-color: #333333;
+}
+
+#logo {
+    width:254px;height:95px;
+}
+
+#studio_pic {
+    width:660px;height:344px
+}
+
+form {
+    font-family: "Avenir";
+    list-style-type: none;
+    border: 3px solid #e7e7e7;
+    background-color: #f3f3f3;
+    border: 1px solid;
+    width:20%;
+}
+
+ul {
+	font-family: "Avenir";
+    list-style-type: none;
+    margin: 0;
+    padding: 0;
+    overflow: hidden;
+    border: 3px solid #e7e7e7;
+    background-color: #f3f3f3;
+    border: 1px solid;
+    border-radius: 7px;
+}
+
+li {
+    float: left;
+}
+
+li a {
+    display: block;
+    color: #666;
+    text-align: left;
+    padding: 14px 16px;
+    text-decoration: none;
+    position: relative;
+}
+
+li a:hover:not(.active) {
+    background-color: #ddd;
+}
+
+li a.active {
+    color: white;
+    background-color: grey;
+}
+
+#phone {
+    padding: 25px;
+    font-family: "Avenir";
+    color: #e7e7e7;
+    font-size: 28px;
+    float:right;
+}
+
+#main{
+    font-family: "Avenir";
+    overflow:hidden;
+}
+
+#user {
+    background-color: #f3f3f3;
+    width: 250px;
+    height: 340px;
+    padding: 25px;
+    margin: 25px;
+    text-decoration: none;
+    list-style-type: none;
+    border: 2px solid;
+    border-radius: 15px;
+    float:left;
+}
+
+#studio {
+    background-color: #f3f3f3;
+    z-index: 3;
+    width: 656px;
+    height: 340px;
+    padding: 25px;
+    margin: 25px;
+    text-decoration: none;
+    list-style-type: none;
+    border: 2px solid;
+    border-radius: 15px;
+    float:right;
+}
