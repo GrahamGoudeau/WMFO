@@ -62,14 +62,14 @@ CREATE TABLE show_schedule_t (
 CREATE TABLE show_request_t (
     id SERIAL PRIMARY KEY,
     show_name VARCHAR(100) CHECK (COALESCE(show_name, '') <> ''),
-    day_of_week day_of_week_e ARRAY NOT NULL,
+    day_of_week_requested day_of_week_e ARRAY NOT NULL CHECK (ARRAY_LENGTH(day_of_week_requested, 1) <= 15),
+    hours_requested INTEGER ARRAY NOT NULL CHECK (ARRAY_LENGTH(hours_requested, 1) <= 15),
     does_alternate_weeks BOOLEAN NOT NULL,
-    hour INTEGER ARRAY NOT NULL,
     semester_show_airs semester_e NOT NULL,
     year_show_airs INTEGER CHECK (year_show_airs > 2000)
 );
 
-CREATE TABLE show_request_djs_t (
+CREATE TABLE show_request_owner_relation_t (
     id SERIAL PRIMARY KEY,
     dj_id INTEGER REFERENCES community_members_t(id),
     show_request_id INTEGER REFERENCES show_request_t(id)
