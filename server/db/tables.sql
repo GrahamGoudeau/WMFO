@@ -39,6 +39,7 @@ CREATE TABLE community_members_t (
     email VARCHAR(100) UNIQUE CHECK (COALESCE(email, '') <> ''),
     password_hash VARCHAR(128) CHECK (COALESCE(password_hash, '') <> ''),
     active BOOLEAN NOT NULL DEFAULT TRUE,
+    account_confirmed BOOLEAN NOT NULL DEFAULT FALSE,
     tufts_id INTEGER DEFAULT NULL CHECK (tufts_id > 0),
     last_agreement_signed INTEGER REFERENCES agreements_t(id) DEFAULT NULL
 );
@@ -54,7 +55,6 @@ CREATE TABLE show_schedule_t (
     day_of_week day_of_week_e NOT NULL,
     does_alternate_weeks BOOLEAN NOT NULL,
     hour INTEGER CHECK (hour BETWEEN 0 AND 23),
-    exec_approved BOOLEAN NOT NULL DEFAULT FALSE,
     semester semester_e NOT NULL,
     year INTEGER CHECK (year > 2000)
 );
