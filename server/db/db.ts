@@ -65,6 +65,7 @@ class DJManagement {
         findByEmailAndPassword: QueryFile,
         getPermissionLevels: QueryFile,
         hasSignedMostRecentAgreement: QueryFile,
+        findById: QueryFile,
     };
 
     private readonly log: Logger;
@@ -75,6 +76,7 @@ class DJManagement {
             findByEmailAndPassword: sql('queries/findByEmailAndPassword.sql', this.log),
             getPermissionLevels: sql('queries/getPermissionLevels.sql', this.log),
             hasSignedMostRecentAgreement: sql('queries/hasSignedMostRecentAgreement.sql', this.log),
+            findById: sql('queries/findById.sql', this.log),
         };
     }
 
@@ -92,25 +94,39 @@ class DJManagement {
         }
     }
 
+    private buildCommunityMember(data: any): CommunityMemberRecord {
+        const permissionLevels: PermissionLevel[] = [];
+        data.forEach((record: any) => {
+            if (record.permission_level) permissionLevels.push(record.permission_level);
+        });
+        const member: CommunityMemberRecord = {
+            id: data[0].id,
+            firstName: data[0].first_name,
+            lastName: data[0].last_name,
+            email: data[0].email,
+            active: data[0].active,
+            tuftsId: data[0].tufts_id,
+            lastAgreementSigned: data[0].last_agreement_signed,
+            permissionLevels: permissionLevels
+        };
+        return member;
+    }
+
+    async findById(id: number): DBAsyncResult<CommunityMemberRecord> {
+        try {
+            const data = await this.db.many(this.queries.findById, [id]);
+            return Either.Right<ResponseMessage, CommunityMemberRecord>(this.buildCommunityMember(data));
+        } catch (e) {
+            return Either.Left<ResponseMessage, CommunityMemberRecord>(buildMessage(e, 'find by id', this.log));
+        }
+    }
+
     async findByEmailAndPassword(email: HTMLEscapedString,
                                  passwordHash: string): DBAsyncResult<CommunityMemberRecord> {
         try {
             const data = await this.db.many(this.queries.findByEmailAndPassword, [email.value, passwordHash]);
-            const permissionLevels: PermissionLevel[] = [];
-            data.forEach((record: any) => {
-                if (record.permission_level) permissionLevels.push(record.permission_level);
-            });
 
-            return Either.Right<ResponseMessage, CommunityMemberRecord>({
-                id: data[0].id,
-                firstName: data[0].first_name,
-                lastName: data[0].last_name,
-                email: data[0].email,
-                active: data[0].active,
-                tuftsId: data[0].tufts_id,
-                lastAgreementSigned: data[0].last_agreement_signed,
-                permissionLevels: permissionLevels
-            });
+            return Either.Right<ResponseMessage, CommunityMemberRecord>(this.buildCommunityMember(data));
         } catch (e) {
             return Either.Left<ResponseMessage, CommunityMemberRecord>(buildMessage(e, 'login', this.log));
         }
@@ -141,7 +157,8 @@ class ExecBoardManagement {
     private readonly queries: {
         getUnconfirmedAccounts: QueryFile,
         getHoursByEmail: QueryFile,
-        getUnconfirmedHours: QueryFile
+        getUnconfirmedHours: QueryFile,
+        addManyDjs: QueryFile,
     };
 
     constructor(private readonly db: pgpLib.IDatabase<any>) {
@@ -150,7 +167,14 @@ class ExecBoardManagement {
             getUnconfirmedAccounts: sql('queries/getunconfirmedAccounts.sql', this.log),
             getHoursByEmail: sql('queries/getHoursByEmail.sql', this.log),
             getUnconfirmedHours: sql('queries/getUnconfirmedHours.sql', this.log),
+            addManyDjs: sql('queries/addManyDjs.sql', this.log),
         };
+    }
+
+    async addManyDjs(): Promise<void> {
+        console.log('adding many', this.queries.addManyDjs.query);
+        //console.log(await this.db.any(this.queries.addManyDjs, [['a'], ['b']]));
+
     }
 
     async getUnconfirmedAccounts(): Promise<CommunityMemberRecord[]> {
@@ -171,6 +195,7 @@ class ExecBoardManagement {
     }
 
     async getUnconfirmedHours(): Promise<VolunteerHours[]> {
+        await this.addManyDjs();
         const data = await this.db.any(this.queries.getUnconfirmedHours);
         return data.map((record: any) => {
             const hours: VolunteerHours = {
