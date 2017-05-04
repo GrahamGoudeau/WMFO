@@ -6,3 +6,4 @@ node_modules/
 client/dist/
 !webpack.config.js
 !jquery.js
+npm-debug.log
