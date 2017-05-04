@@ -1,7 +1,7 @@
 import * as express from 'express';
 import * as bodyParser from 'body-parser';
 import { HttpMethod, RouteManager, InsecureRoute, InsecureRouteBuilder, SecureRoute, SecureRouteBuilder } from './utils/routeUtils';
-import { DJ_PERMISSIONS, EXEC_BOARD_PERMISSIONS, PermissionLevel } from './utils/requestUtils';
+import { ALL_PERMISSIONS, DJ_PERMISSIONS, EXEC_BOARD_PERMISSIONS, PermissionLevel } from './utils/requestUtils';
 import Logger from './utils/logger';
 import * as path from 'path';
 import Config from './utils/config';
@@ -28,6 +28,9 @@ const registerRouteBuilder: InsecureRouteBuilder = <InsecureRouteBuilder>new Ins
     .setHttpMethod(HttpMethod.POST);
 
 const loginRouteBuilder: InsecureRouteBuilder = <InsecureRouteBuilder>new InsecureRouteBuilder('/api/account/login', Account_api.handleLogin)
+    .setHttpMethod(HttpMethod.POST);
+
+const profileRouteBuilder: SecureRouteBuilder = <SecureRouteBuilder>new SecureRouteBuilder('/api/account/profile', Account_api.handleProfile, ALL_PERMISSIONS)
     .setHttpMethod(HttpMethod.POST);
 
 const logHoursBuilder: SecureRouteBuilder =
@@ -71,11 +74,13 @@ const secureRoutes: SecureRoute[] = [
     getUnconfirmedAccountsBuilder,
     getUnconfirmedHoursBuilder,
     new SecureRoute(checkMostRecentAgreementBuilder),
+    new SecureRoute(profileRouteBuilder),
 ];
 
 routeManager.addInsecureRoutes(insecureRoutes);
 routeManager.addSecureRoutes(secureRoutes);
 
+app.get('/dist/*', (_, res: express.Response) => res.status(404).send());
 app.get('/*', (_, res: express.Response) => {
     res.sendFile(path.resolve(`${clientDir}/../index.html`));
 });

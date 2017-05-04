@@ -9,6 +9,17 @@ import { buildAuthToken, hashPassword } from '../utils/security';
 const log: Logger = new Logger('account-api');
 const db: DB = DB.getInstance();
 
+export async function handleProfile(req: express.Request,
+                                    res: express.Response,
+                                    authToken: AuthToken): Promise<void> {
+    const id: number = authToken.id;
+    const result: DBResult<CommunityMemberRecord> = await db.dj.findById(id);
+    result.caseOf({
+        left: e => badRequest(res, e),
+        right: c => jsonResponse(res, c)
+    });
+}
+
 export async function handleLogin(req: express.Request,
                                   res: express.Response): Promise<void> {
     const body: { email: string, password: string } = req.body;
