@@ -100,7 +100,7 @@ export class AuthState {
                 this.sentInitialRequest = true;
                 if (req.getAuthHeader() == null && window.localStorage != null) {
                     const storedToken: string = window.localStorage[WMFORequest.AUTH_HEADER];
-                    req.setAuthHeader(storedToken == null ? storedToken : '');
+                    req.setAuthHeader(storedToken != null ? storedToken : '');
                 }
 
                 try {

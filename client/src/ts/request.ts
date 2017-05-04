@@ -26,10 +26,16 @@ export default class WMFORequest {
 
     setAuthHeader(value: string) {
         this.globalHeaders[WMFORequest.AUTH_HEADER] = value;
+        if (window.localStorage) {
+            window.localStorage[WMFORequest.AUTH_HEADER] = value;
+        }
     }
 
     removeAuthHeader() {
         delete this.globalHeaders[WMFORequest.AUTH_HEADER];
+        if (window.localStorage) {
+            window.localStorage[WMFORequest.AUTH_HEADER] = '';
+        }
     }
 
     getAuthHeader() {
