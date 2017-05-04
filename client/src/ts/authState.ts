@@ -61,19 +61,14 @@ export class AuthState {
     }
 
     addAsyncListener(f: AsyncAuthStateListener) {
-        console.trace('adding async');
         this.asyncListeners.push(f);
     }
 
     private async broadcast() {
-        console.log('is just in broadcast:', this.user.isJust());
         this.asyncListeners.forEach(async f => {
-            console.log('is just for async:', this.user.isJust());
-            console.log(f);
             await f(this.user);
         });
         this.listeners.forEach(f => {
-            console.log('is just for normal f:', this.user.isJust());
             f(this.user);
         });
     }
@@ -95,7 +90,6 @@ export class AuthState {
     async updateState(): Promise<Maybe<CommunityMemberRecord>> {
         const result = await this.user.caseOf({
             just: async (c: CommunityMemberRecord) => {
-                console.log('UPDATE, JUST');
                 return Maybe.just<CommunityMemberRecord>(c);
             },
             nothing: async () => {
@@ -107,17 +101,14 @@ export class AuthState {
                 if (req.getAuthHeader() == null && window.localStorage != null) {
                     const storedToken: string = window.localStorage[WMFORequest.AUTH_HEADER];
                     req.setAuthHeader(storedToken == null ? storedToken : '');
-                    console.log('stored:', storedToken);
                 }
 
                 try {
                     const response = await (WMFORequest.getInstance()).POST(this.PROFILE_ENDPOINT);
                     this.authorize(response.data);
-                    console.log('returning just from nothing()');
                     return Maybe.just<CommunityMemberRecord>(response.data);
                 } catch (e) {
                     if (e.status !== 401) throw e;
-                    console.log('failed to auth');
                     return Maybe.nothing<CommunityMemberRecord>();
                 }
             }

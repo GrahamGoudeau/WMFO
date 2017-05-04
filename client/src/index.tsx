@@ -25,7 +25,6 @@ class App extends React.Component<{}, AppState> {
         };
         WMFORequest.getInstance().setAuthHeader('9196ddfb7c3793b2c97b533a34c6618cf7798e1dfde56b75bf3d11ccb2875b3a264b4db4e2a5bd104b5018b7f615c1dd7e84358938555b804133bb63b2b1b2f0188a3fbaf669664c568f1e836c6627456bfa46fd12b20a0ce237e52f6433548791040e55a28b6022ae5432ddb3ee2b79579cf89f84');
         AuthState.getInstance().addListener(m => {
-            console.log('in app:', m.isJust());
             this.setState({
                 user: m
             });
