@@ -1,43 +1,41 @@
 import * as React from "react";
-{/*import {Link} from "react-router";*/}
-export interface HomeProps { compiler: string; framework: string; }
+import Maybe from "../ts/maybe";
+import { AuthState, CommunityMemberRecord } from "../ts/authState";
+import Component from "./Component";
 
-export class Home extends React.Component<HomeProps, undefined> {
+interface HomeState {
+    user: Maybe<CommunityMemberRecord>;
+    querying: boolean;
+}
+
+export class Home extends Component<{}, HomeState> {
+    constructor() {
+        super();
+        this.state = {
+            user: AuthState.getInstance().getState(),
+            querying: true
+        };
+        AuthState.getInstance().addListener((m: Maybe<CommunityMemberRecord>) => {
+            setTimeout(() => {
+                this.setState({ user: m, querying: false });
+            }, 100);
+        });
+        setTimeout(() => {
+            AuthState.getInstance().updateState().then(m => this.setState({ user: m, querying: false }));
+        }, 100);
+    }
+
     render() {
-    	return (
-    		<div id="home">
-    					{/*
-						<a href="">
-						  <img id="logo" src="https://www.wmfo.org/wp-content/uploads/2016/01/Logo-1.png" alt="WMFO"  />
+        const homePage = this.state.user.caseOf({
+            nothing: () => (<div>PLEASE LOG IN</div>),
+            just: (m: CommunityMemberRecord) => (<div>{m.id}</div>)
+        });
+        return (
+            <div style={{color: 'white'}}>
+                {this.state.querying ? null : homePage}
+            </div>
+        );
 
-						</a>
-
-						<div id="phone">Call in! 855-915-WMFO</div>
-
-						<ul>
-						  <li><Link to ="/">Home</Link></li>
-						  <li><Link to="/contact">Contact</Link></li>
-						  <li><Link to="/about">About</Link></li>
-						  <li><Link to="/show_form">Show Form</Link></li>
-						  <li><Link to="/volunteer_form">Log Volunteer Hours</Link></li>
-						</ul>
-						*/}
-
-						<div id="main">
-						<div id="user"><h1>User Profile</h1>
-               			 	<ul>
-               			 		<li><a>Name:</a></li>
-
-               			 		<li><a>DJ Name:</a></li>
-               			 	</ul>
-						</div>
-
-						  <div id="studio">
-						  
-						   	<img id="studio_pic" src="https://www.wmfo.org/wp-content/uploads/2017/02/WmfoStudioAMainBoardPano.2016.04.01.CC-By-EdwardBeuchert.Large_-1.jpg" alt="Studio"/>
-						  </div>
-						</div>
-			</div>
-		);
     }
 }
+
