@@ -3,7 +3,10 @@
 ## Installation
 1. Install [Homebrew](http://brew.sh/), a package manager for Mac OS
 1. Install Node and NPM with `brew install node`. You may need to change some XCode permissions (you'll be prompted if that's the case)
+1. Do something equivalent to `mv server/.dev.env server/.env`, which will set you up with the bare minimum config variables.
 1. In the root directory of the repo, run `./setup.sh` which will try to install all the necessary dependencies and build the front end for the first time. There should be no errors.
+1. You should install Postgres, and get it running.  Make sure that `localhost` is specified as the `DATABASE_URL` in the config file.
+1. Run `cd server/db; ./setupDb.sh` which will set up the database `wmfo_db` in Postgres.
 
 ## Running
 1. Change into the `server/` directory with `cd server/`
