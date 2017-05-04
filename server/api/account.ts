@@ -34,10 +34,13 @@ export async function handleLogin(req: express.Request,
                                                                                        hashPassword(body.email, body.password));
         result.caseOf({
             left: e => badRequest(res, e),
-            right: c => jsonResponse(res, {
-                userData: c,
-                authToken: buildAuthToken(c.email, c.id, c.permissionLevels)
-            })
+            right: c => {
+                log.INFO('Validating user', c.email);
+                jsonResponse(res, {
+                    userData: c,
+                    authToken: buildAuthToken(c.email, c.id, c.permissionLevels)
+                });
+            }
         });
 
         return;

@@ -55,7 +55,16 @@ class LoggerModule {
             return;
         }
 
-        const message = `[${levelToString(this.level)} ${this.name}] -- ${this.stringify(msgs)}`;
+        // super gross code just to get a nicely formatted date in MM/dd/yyyy format
+        var d = new Date(),
+            dformat = ("00" + (d.getMonth() + 1)).slice(-2) + "/" +
+                ("00" + d.getDate()).slice(-2) + "/" +
+                d.getFullYear() + " " +
+                ("00" + d.getHours()).slice(-2) + ":" +
+                ("00" + d.getMinutes()).slice(-2) + ":" +
+                ("00" + d.getSeconds()).slice(-2);
+
+        const message = `[${levelToString(this.level)} ${this.name} ${dformat}] -- ${this.stringify(msgs)}`;
         console.log(message);
         if (this.level === DebugLevel.ERROR && this.isProduction) {
             /*
