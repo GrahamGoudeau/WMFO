@@ -44,6 +44,26 @@ CREATE TABLE community_members_t (
     last_agreement_signed INTEGER REFERENCES agreements_t(id) DEFAULT NULL
 );
 
+CREATE TABLE dj_name_t (
+    id SERIAL PRIMARY KEY,
+    name VARCHAR(100) CHECK (COALESCE(name, '') <> ''),
+    community_member_id INTEGER REFERENCES community_members_t(id) NOT NULL
+);
+
+CREATE VIEW dj_info_v AS
+    SELECT
+        cm.id,
+        cm.first_name,
+        cm.last_name,
+        cm.email,
+        cm.active,
+        cm.account_confirmed,
+        cm.tufts_id,
+        cm.last_agreement_signed,
+        djn.name as dj_name
+    FROM community_members_t cm
+    LEFT JOIN dj_name_t djn ON cm.id = djn.community_member_id;
+
 CREATE TABLE show_t (
     id SERIAL PRIMARY KEY,
     show_name VARCHAR(100) CHECK (COALESCE(show_name, '') <> '')
