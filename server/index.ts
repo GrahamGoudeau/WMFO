@@ -12,6 +12,7 @@ import * as Account_api from './api/account';
 import { hashPassword } from './utils/security';
 
 const log: Logger = new Logger('init');
+log.INFO('Server starting');
 const app: express.Express = express();
 
 app.use(bodyParser.urlencoded({extended: true}));
