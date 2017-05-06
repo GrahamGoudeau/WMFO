@@ -26,3 +26,7 @@ VALUES
     ((SELECT id FROM community_members_t WHERE email='ops@wmfo.org'), 'OPERATIONS_DIRECTOR'),
     ((SELECT id FROM community_members_t WHERE email='grahamgoudeau+1@gmail.com'), 'STUDENT_DJ')
 ;
+
+/* for UUID generation */
+CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
+/* usage: uuid_generate_v4() */

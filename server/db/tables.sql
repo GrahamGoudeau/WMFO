@@ -108,6 +108,36 @@ CREATE TABLE permission_level_t (
     PRIMARY KEY(community_member_id, permission_level)
 );
 
+CREATE TABLE pending_community_members_t (
+    email VARCHAR(100) PRIMARY KEY CHECK (COALESCE(email, '') <> ''),
+    code UUID NOT NULL
+);
+
+CREATE OR REPLACE FUNCTION check_member_not_already_exist()
+    RETURNS trigger AS
+$BODY$
+BEGIN
+    IF NEW.email = (SELECT email FROM community_members_t WHERE email=NEW.email) THEN
+        RAISE EXCEPTION 'Pending member duplicate';
+        END IF;
+
+        RETURN NEW;
+    END;
+$BODY$
+LANGUAGE 'plpgsql';
+
+CREATE TRIGGER check_new_member
+BEFORE INSERT
+ON pending_community_members_t
+FOR EACH ROW
+EXECUTE PROCEDURE check_member_not_already_exist();
+
+CREATE TABLE pending_members_permissions_t (
+    pending_community_members_email VARCHAR(100) REFERENCES pending_community_members_t(email),
+    permission_level permission_level_e NOT NULL,
+    PRIMARY KEY(pending_community_members_email, permission_level)
+);
+
 CREATE TABLE volunteer_hours_t (
     id SERIAL PRIMARY KEY,
     created TIMESTAMP NOT NULL DEFAULT NOW(),
