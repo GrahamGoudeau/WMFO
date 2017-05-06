@@ -13,6 +13,7 @@ export async function handleGetUnconfirmedAccounts(req: express.Request,
                                                    res: express.Response,
                                                    authToken: AuthToken): Promise<void> {
     try {
+        log.INFO('User', authToken.email, 'requesting unconfirmed accounts');
         const data: CommunityMemberRecord[] = await db.exec.getUnconfirmedAccounts();
         jsonResponse(res, data);
         return;
@@ -27,6 +28,7 @@ export async function handleGetUnconfirmedHours(req: express.Request,
                                                 res: express.Response,
                                                 authToken: AuthToken): Promise<void> {
     try {
+        log.INFO('User', authToken.email, 'requesting unconfirmed hours');
         const data: VolunteerHours[] = await db.exec.getUnconfirmedHours();
         jsonResponse(res, data);
         return;

@@ -16,7 +16,10 @@ export async function handleProfile(req: express.Request,
     const result: DBResult<CommunityMemberRecord> = await db.dj.findById(id);
     result.caseOf({
         left: e => badRequest(res, e),
-        right: c => jsonResponse(res, c)
+        right: c => {
+            log.INFO('Getting profile data for', c.email);
+            jsonResponse(res, c);
+        }
     });
 }
 
