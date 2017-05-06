@@ -7,3 +7,4 @@ client/dist/
 !webpack.config.js
 !jquery.js
 npm-debug.log
+wmfo.log
