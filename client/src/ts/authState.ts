@@ -1,16 +1,23 @@
 import Maybe from "./maybe";
 import WMFORequest from "./request";
 
-export type PermissionLevel =
-    'COMMUNITY_DJ' |
-    'STUDENT_DJ' |
-    'GENERAL_MANAGER' |
-    'ASSISTANT_GENERAL_MANAGER' |
-    'OPERATIONS_DIRECTOR' |
-    'PROGRAMMING_DIRECTOR' |
-    'SCHEDULING_COORDINATOR' |
-    'VOLUNTEER_COORDINATOR' |
-    'WEBMASTER';
+const permissionLevelStrings = {
+    COMMUNITY_DJ: '',
+    STUDENT_DJ: '',
+    GENERAL_MANAGER: '',
+    ASSISTANT_GENERAL_MANAGER: '',
+    OPERATIONS_DIRECTOR: '',
+    PROGRAMMING_DIRECTOR: '',
+    SCHEDULING_COORDINATOR: '',
+    VOLUNTEER_COORDINATOR: '',
+    WEBMASTER: '',
+}
+
+export type PermissionLevel = keyof typeof permissionLevelStrings;
+
+export function isPermissionLevel(s: string): s is PermissionLevel {
+    return permissionLevelStrings.hasOwnProperty(s);
+}
 
 export const EXEC_BOARD_PERMISSIONS: PermissionLevel[] = [
     'GENERAL_MANAGER',
