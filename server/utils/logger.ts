@@ -1,23 +1,43 @@
-import { o } from './functionalUtils';
+import { readLines, o } from './functionalUtils';
+import * as fs from 'fs';
 
 enum DebugLevel {
     INFO,
     DEBUG,
     ERROR
 }
+
 export default class Logger {
     public static readonly DebugLevel = DebugLevel;
+    private static readonly LOG_FILENAME = 'wmfo.log';
+    private static readonly FILE_PATH_STR = `${__dirname}/../${Logger.LOG_FILENAME}`;
+    private static readonly createLogFile: (path: string) => fs.WriteStream = (path: string) => fs.createWriteStream(path, { flags: 'a' });
+    private static LOG_FILE: fs.WriteStream = Logger.createLogFile(Logger.FILE_PATH_STR);
+    private static readonly LINE_LIMIT: number = 20000;
+    private static numLinesWritten: number = 0;
+
+    private static writeLineToLog(message: string): void {
+        if (Logger.numLinesWritten > Logger.LINE_LIMIT) {
+            Logger.LOG_FILE.close();
+            fs.unlinkSync(Logger.FILE_PATH_STR);
+            Logger.LOG_FILE = Logger.createLogFile(Logger.FILE_PATH_STR);
+            Logger.numLinesWritten = 0;
+        }
+        Logger.LOG_FILE.write(`${message}\n`);
+        Logger.numLinesWritten += 1;
+    }
+
     public readonly INFO: (...msgs: any[]) => void;
     public readonly DEBUG: (...msgs: any[]) => void;
     public readonly ERROR: (...msgs: any[]) => void;
     constructor(public readonly name: string) {
-        const infoLogger = new LoggerModule(name, DebugLevel.INFO);
+        const infoLogger = new LoggerModule(name, DebugLevel.INFO, Logger.FILE_PATH_STR, Logger.writeLineToLog);
         this.INFO = infoLogger.log.bind(infoLogger);
 
-        const debugLogger = new LoggerModule(name, DebugLevel.DEBUG);
+        const debugLogger = new LoggerModule(name, DebugLevel.DEBUG, Logger.FILE_PATH_STR, Logger.writeLineToLog);
         this.DEBUG = debugLogger.log.bind(debugLogger);
 
-        const errorLogger = new LoggerModule(name, DebugLevel.ERROR);
+        const errorLogger = new LoggerModule(name, DebugLevel.ERROR, Logger.FILE_PATH_STR, Logger.writeLineToLog);
         this.ERROR = errorLogger.log.bind(errorLogger);
     }
 }
@@ -45,9 +65,10 @@ class LoggerModule {
         };
     }));
 
-    constructor(private name: string, private level: DebugLevel) {
-        // TODO: figure out a way around this dependency cycle that ISNT hacky and awful
-        //this.isProduction = this.config.getBooleanConfigDefault('PRODUCTION', false);
+    constructor(private name: string,
+                private level: DebugLevel,
+                private readonly logPathStr: string,
+                private readonly writeToFile: (message: string) => void) {
     }
 
     public log(...msgs: any[]): void {
@@ -66,12 +87,17 @@ class LoggerModule {
 
         const message = `[${levelToString(this.level)} ${this.name} ${dformat}] -- ${this.stringify(msgs)}`;
         console.log(message);
+        this.writeToFile(message);
+        function getStackTrace(): string {
+           return new Error().stack;
+        };
         if (this.level === DebugLevel.ERROR && this.isProduction) {
             /*
             const emailer: IEmailer = getEmailerInstance();
             emailer.errorAlert(message);
             */
             console.trace();
+            this.writeToFile(getStackTrace());
         }
     }
 }
