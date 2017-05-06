@@ -44,8 +44,22 @@ export abstract class FormComponent<P, S> extends Component<P, S> {
     handleChange(event: any) {
         event.preventDefault();
         const newStateField: any = {};
+
         const id: string = (event.target as HTMLElement).id as string;
-        const value: string = (event.target as HTMLInputElement).value as string;
+        let value: any;
+        switch (event.target.type) {
+            case 'email':
+            case 'password':
+            case 'text':
+                value = (event.target as HTMLInputElement).value as string;
+                break;
+            case 'checkbox':
+                value = event.target.checked;
+                break;
+            default:
+                throw new Error(`Unknown input type: ${event.target.type}`);
+        }
+
         this.setState(Object.assign({},
             this.state,
             {
