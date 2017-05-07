@@ -59,6 +59,12 @@ const checkMostRecentAgreementBuilder: SecureRouteBuilder =
                                                DJ_PERMISSIONS)
     .setHttpMethod(HttpMethod.POST);
 
+const addPendingMembersBuilder: SecureRouteBuilder =
+    <SecureRouteBuilder>new SecureRouteBuilder('/api/exec/addPendingMembers',
+                                               Exec_api.handleAddPendingMembers,
+                                               EXEC_BOARD_PERMISSIONS)
+    .setHttpMethod(HttpMethod.POST);
+
 const loginRoute: InsecureRoute = new InsecureRoute(loginRouteBuilder);
 const registerRoute: InsecureRoute = new InsecureRoute(registerRouteBuilder);
 const logHoursRoute: SecureRoute = new SecureRoute(logHoursBuilder);
@@ -76,6 +82,7 @@ const secureRoutes: SecureRoute[] = [
     getUnconfirmedHoursBuilder,
     new SecureRoute(checkMostRecentAgreementBuilder),
     new SecureRoute(profileRouteBuilder),
+    new SecureRoute(addPendingMembersBuilder),
 ];
 
 routeManager.addInsecureRoutes(insecureRoutes);

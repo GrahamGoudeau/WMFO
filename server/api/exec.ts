@@ -1,8 +1,8 @@
 import * as express from 'express';
 import Logger from '../utils/logger';
 import DB from '../db/db';
-import { VolunteerHours, CommunityMemberRecord, DBResult } from '../db/db';
-import { HTMLEscapedString, COMMON_FIELD_SHAPES, validateKeys } from '../utils/functionalUtils';
+import { PendingCommunityMember, VolunteerHours, CommunityMemberRecord, DBResult } from '../db/db';
+import { validateArray, HTMLEscapedString, COMMON_FIELD_SHAPES, validateKeys } from '../utils/functionalUtils';
 import { AuthToken, PermissionLevel, ResponseMessage, badRequest, jsonResponse, successResponse } from '../utils/requestUtils';
 import { buildAuthToken, hashPassword } from '../utils/security';
 
@@ -37,4 +37,35 @@ export async function handleGetUnconfirmedHours(req: express.Request,
         badRequest(res, 'DB_ERROR');
         return;
     }
+}
+
+export async function handleAddPendingMembers(req: express.Request,
+                                              res: express.Response,
+                                              authToken: AuthToken): Promise<void> {
+    if (!req.body || !req.body.pendingMembers) {
+        badRequest(res);
+        return;
+    }
+
+    const arr = req.body.pendingMembers;
+
+    // if true, signals to the compiler that arr is of type PendingCommunityMember[]
+    if (!validateArray<PendingCommunityMember>(arr, {
+                'email': COMMON_FIELD_SHAPES.email,
+                'code': COMMON_FIELD_SHAPES.uuid
+            })) {
+        badRequest(res);
+        return;
+    }
+    const result: DBResult<{}> = await db.exec.addPendingMembers(arr);
+    result.caseOf({
+        right: (_) => {
+            log.INFO('User', authToken.email, 'added', arr.length, 'users');
+            successResponse(res)
+        },
+        left: (e) => {
+            log.INFO('User', authToken.email, 'failed to add users');
+            badRequest(res, e);
+        }
+    });
 }
