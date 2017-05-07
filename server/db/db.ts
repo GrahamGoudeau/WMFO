@@ -34,6 +34,11 @@ export interface CommunityMemberRecord {
     permissionLevels: PermissionLevel[];
 }
 
+export interface PendingCommunityMember {
+    email: string;
+    code: string;
+}
+
 export interface VolunteerHours {
     id: number;
     created: Date;
@@ -69,7 +74,7 @@ class DJManagement {
     };
 
     private readonly log: Logger;
-    constructor(private readonly db: pgpLib.IDatabase<any>) {
+    constructor(private readonly pgp: pgpLib.IMain, private readonly db: pgpLib.IDatabase<any>) {
         this.log = new Logger('dj-management');
         this.queries = {
             register: sql('queries/registerDj.sql', this.log),
@@ -160,8 +165,11 @@ class ExecBoardManagement {
         getUnconfirmedHours: QueryFile,
         addManyDjs: QueryFile,
     };
+    private readonly columnSets: {
+        addPendingMembers: pgpLib.ColumnSet,
+    };
 
-    constructor(private readonly db: pgpLib.IDatabase<any>) {
+    constructor(private readonly pgp: pgpLib.IMain, private readonly db: pgpLib.IDatabase<any>) {
         this.log = new Logger('exec-management');
         this.queries = {
             getUnconfirmedAccounts: sql('queries/getunconfirmedAccounts.sql', this.log),
@@ -169,12 +177,19 @@ class ExecBoardManagement {
             getUnconfirmedHours: sql('queries/getUnconfirmedHours.sql', this.log),
             addManyDjs: sql('queries/addManyDjs.sql', this.log),
         };
+        this.columnSets = {
+            addPendingMembers: new this.pgp.helpers.ColumnSet(['email', 'code'], {table: 'pending_community_members_t'}),
+        }
     }
 
-    async addManyDjs(): Promise<void> {
-        console.log('adding many', this.queries.addManyDjs.query);
-        //console.log(await this.db.any(this.queries.addManyDjs, [['a'], ['b']]));
-
+    async addPendingMembers(pendingMembers: PendingCommunityMember[]): DBAsyncResult<{}> {
+        const values = pendingMembers.map((member: PendingCommunityMember) => { return { email: member.email, code: member.code } });
+        try {
+            await this.db.none(this.pgp.helpers.insert(values, this.columnSets.addPendingMembers));
+        } catch (e) {
+            return Either.Left<ResponseMessage, {}>(buildMessage(e, 'add pending members', this.log));
+        }
+        return Either.Right<ResponseMessage, {}>({});
     }
 
     async getUnconfirmedAccounts(): Promise<CommunityMemberRecord[]> {
@@ -195,7 +210,6 @@ class ExecBoardManagement {
     }
 
     async getUnconfirmedHours(): Promise<VolunteerHours[]> {
-        await this.addManyDjs();
         const data = await this.db.any(this.queries.getUnconfirmedHours);
         return data.map((record: any) => {
             const hours: VolunteerHours = {
@@ -215,6 +229,7 @@ class ExecBoardManagement {
 export default class Database {
     private static INSTANCE: Database = null;
     private db: pgpLib.IDatabase<any>;
+    private pgp: pgpLib.IMain;
     private readonly log = new Logger('db');
 
     public readonly dj: DJManagement;
@@ -222,6 +237,7 @@ export default class Database {
 
     private constructor() {
         const pgp: pgpLib.IMain = pgpLib({});
+        this.pgp = pgp;
         let dbUrl: string;
         const isProduction: boolean = CONFIG.getBooleanConfig('PRODUCTION');
         if (isProduction) {
@@ -236,8 +252,8 @@ export default class Database {
             database: CONFIG.getStringConfig('DATABASE_NAME')
         };
         this.db = pgp(pgpCn);
-        this.dj = new DJManagement(this.db);
-        this.exec = new ExecBoardManagement(this.db);
+        this.dj = new DJManagement(this.pgp, this.db);
+        this.exec = new ExecBoardManagement(this.pgp, this.db);
     }
 
     public static getInstance(): Database {
