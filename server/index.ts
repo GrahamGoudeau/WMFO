@@ -23,7 +23,7 @@ app.use('/dist/', express.static(path.resolve(clientDir)));
 const CONFIG: Config = Config.getInstance();
 DB.getInstance();
 
-const routeManager = new RouteManager(app, '/login');
+const routeManager = new RouteManager(app, '/');
 
 const registerRouteBuilder: InsecureRouteBuilder = <InsecureRouteBuilder>new InsecureRouteBuilder('/api/account/register', Account_api.handleRegister)
     .setHttpMethod(HttpMethod.POST);
