@@ -1,8 +1,10 @@
 import * as fs from 'fs';
+import { isPermissionLevel, PermissionLevel } from './requestUtils';
 
 export type JSType =
     'number' |
     'boolean' |
+    'object' |
     'string';
 
 export function o<A, B, C>(f: (y: B) => C,
@@ -66,7 +68,18 @@ export const COMMON_FIELD_SHAPES: any = {
     num: { type: 'number' },
     nonnegativeNum: { type: 'number', validation: [(n: number) => n >= 0] },
     uuid: { type: 'string', validation: [(s: string) => /^[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12}$/.test(s)] },
+    permission: { type: 'string', validation: [(s: string) => isPermissionLevel(s) ] },
+    nonemptyArray: { type: 'object', validation: [<T>(arr: T[]) => arr.length > 0] },
 };
+
+export function buildNonObjectArrayShape<T>(shape: KeyShape): KeyShape {
+    return {
+        type: 'object',
+        validation: [ (arr: T[]): boolean => {
+            return validateArrayNonobject(arr, shape);
+        } ]
+    };
+}
 
 export function validateKeys(obj: any, requestShape: RequestShape): boolean {
     if (!obj) return false;
@@ -85,8 +98,12 @@ export function validateKeys(obj: any, requestShape: RequestShape): boolean {
 }
 
 export function validateArray<T>(arr: any, shape: RequestShape): arr is T[] {
-    return Array.isArray(arr) && arr.every((x: any) =>
-            validateKeys(x, shape));
+    return Array.isArray(arr) && arr.every((x: T) => validateKeys(x, shape));
+}
+
+export function validateArrayNonobject<T>(arr: any, shape: KeyShape): arr is T[] {
+    return Array.isArray(arr) && arr.every((x: T) =>
+        typeof x === shape.type && (shape.validation ? shape.validation.every(f => f(x)) : true));
 }
 
 export class HTMLEscapedString {
