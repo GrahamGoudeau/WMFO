@@ -2,7 +2,7 @@ import * as express from 'express';
 import Logger from '../utils/logger';
 import DB from '../db/db';
 import { PendingCommunityMember, VolunteerHours, CommunityMemberRecord, DBResult } from '../db/db';
-import { validateArray, HTMLEscapedString, COMMON_FIELD_SHAPES, validateKeys } from '../utils/functionalUtils';
+import { buildNonObjectArrayShape, KeyShape, RequestShape, validateArray, HTMLEscapedString, COMMON_FIELD_SHAPES, validateKeys } from '../utils/functionalUtils';
 import { AuthToken, PermissionLevel, ResponseMessage, badRequest, jsonResponse, successResponse } from '../utils/requestUtils';
 import { buildAuthToken, hashPassword } from '../utils/security';
 
@@ -14,7 +14,7 @@ export async function handleGetUnconfirmedAccounts(req: express.Request,
                                                    authToken: AuthToken): Promise<void> {
     try {
         log.INFO('User', authToken.email, 'requesting unconfirmed accounts');
-        const data: CommunityMemberRecord[] = await db.exec.getUnconfirmedAccounts();
+        const data: PendingCommunityMember[] = await db.exec.getUnconfirmedAccounts();
         jsonResponse(res, data);
         return;
     } catch (e) {
@@ -50,10 +50,16 @@ export async function handleAddPendingMembers(req: express.Request,
     const arr = req.body.pendingMembers;
 
     // if true, signals to the compiler that arr is of type PendingCommunityMember[]
+    const permissionArrayShape: KeyShape = buildNonObjectArrayShape(COMMON_FIELD_SHAPES.permission);
+    permissionArrayShape.validation.push((arr: any[]) => {
+        return arr.length > 0
+    });
     if (!validateArray<PendingCommunityMember>(arr, {
                 'email': COMMON_FIELD_SHAPES.email,
-                'code': COMMON_FIELD_SHAPES.uuid
+                'code': COMMON_FIELD_SHAPES.uuid,
+                'permissionLevels': permissionArrayShape,
             })) {
+
         badRequest(res);
         return;
     }

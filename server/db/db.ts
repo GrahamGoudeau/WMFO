@@ -37,6 +37,7 @@ export interface CommunityMemberRecord {
 export interface PendingCommunityMember {
     email: string;
     code: string;
+    permissionLevels: PermissionLevel[];
 }
 
 export interface VolunteerHours {
@@ -167,6 +168,7 @@ class ExecBoardManagement {
     };
     private readonly columnSets: {
         addPendingMembers: pgpLib.ColumnSet,
+        addPendingPermissions: pgpLib.ColumnSet,
     };
 
     constructor(private readonly pgp: pgpLib.IMain, private readonly db: pgpLib.IDatabase<any>) {
@@ -179,31 +181,41 @@ class ExecBoardManagement {
         };
         this.columnSets = {
             addPendingMembers: new this.pgp.helpers.ColumnSet(['email', 'code'], {table: 'pending_community_members_t'}),
+            addPendingPermissions: new this.pgp.helpers.ColumnSet(['pending_community_members_email', 'permission_level'], {table: 'pending_members_permissions_t'}),
         }
     }
 
     async addPendingMembers(pendingMembers: PendingCommunityMember[]): DBAsyncResult<{}> {
         const values = pendingMembers.map((member: PendingCommunityMember) => { return { email: member.email, code: member.code } });
+        const permissionValues: { pending_community_members_email: string; permission_level: PermissionLevel }[] = [];
+        pendingMembers.forEach((member: PendingCommunityMember) =>
+            member.permissionLevels.forEach((level: PermissionLevel) => {
+                permissionValues.push({
+                    pending_community_members_email: member.email,
+                    permission_level: level
+                });
+            })
+        );
         try {
-            await this.db.none(this.pgp.helpers.insert(values, this.columnSets.addPendingMembers));
+            await this.db.tx(t => {
+                const q1 = t.none(this.pgp.helpers.insert(values, this.columnSets.addPendingMembers));
+                const q2 = t.none(this.pgp.helpers.insert(permissionValues, this.columnSets.addPendingPermissions));
+
+                return t.batch([q1, q2]);
+            });
         } catch (e) {
             return Either.Left<ResponseMessage, {}>(buildMessage(e, 'add pending members', this.log));
         }
         return Either.Right<ResponseMessage, {}>({});
     }
 
-    async getUnconfirmedAccounts(): Promise<CommunityMemberRecord[]> {
+    async getUnconfirmedAccounts(): Promise<PendingCommunityMember[]> {
         const data = await this.db.any(this.queries.getUnconfirmedAccounts);
         return data.map((record: any) => {
-            const member: CommunityMemberRecord = {
-                id: record.id,
-                firstName: record.first_name,
-                lastName: record.last_name,
+            const member: PendingCommunityMember = {
                 email: record.email,
-                active: record.false,
-                tuftsId: record.tufts_id,
-                lastAgreementSigned: record.last_agreement_signed,
-                permissionLevels: []
+                code: record.code,
+                permissionLevels: record.permission_levels,
             };
             return member;
         });
