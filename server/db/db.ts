@@ -72,6 +72,7 @@ class DJManagement {
         getPermissionLevels: QueryFile,
         hasSignedMostRecentAgreement: QueryFile,
         findById: QueryFile,
+        getSingleUnconfirmedAccount: QueryFile,
     };
 
     private readonly log: Logger;
@@ -83,12 +84,27 @@ class DJManagement {
             getPermissionLevels: sql('queries/getPermissionLevels.sql', this.log),
             hasSignedMostRecentAgreement: sql('queries/hasSignedMostRecentAgreement.sql', this.log),
             findById: sql('queries/findById.sql', this.log),
+            getSingleUnconfirmedAccount: sql('queries/getSingleUnconfirmedAccount.sql', this.log),
         };
+
     }
 
     async getPermissionLevels(communityMemberId: number): Promise<PermissionLevel[]> {
         const data = await this.db.any(this.queries.getPermissionLevels, [communityMemberId]);
         return data.map((obj: any) => obj.permission_level);
+    }
+
+    async getSingleUnconfirmedAccount(code: string): DBAsyncResult<PendingCommunityMember> {
+        try {
+            const result = await this.db.one(this.queries.getSingleUnconfirmedAccount, [code]);
+            return Either.Right<ResponseMessage, PendingCommunityMember>({
+                email: result.email,
+                code: result.code,
+                permissionLevels: result.permission_levels
+            });
+        } catch (e) {
+            return Either.Left<ResponseMessage, PendingCommunityMember>(buildMessage(e, 'get single unconfirmed account', this.log));
+        }
     }
 
     async hasSignedMostRecentAgreement(id: number): DBAsyncResult<boolean> {

@@ -95,7 +95,8 @@ CREATE TABLE permission_level_t (
 
 CREATE TABLE pending_community_members_t (
     email VARCHAR(100) PRIMARY KEY CHECK (COALESCE(email, '') <> ''),
-    code UUID NOT NULL
+    code UUID NOT NULL,
+    claimed BOOLEAN NOT NULL DEFAULT FALSE
 );
 
 CREATE OR REPLACE FUNCTION check_member_not_already_exist()
@@ -122,6 +123,16 @@ CREATE TABLE pending_members_permissions_t (
     permission_level permission_level_e NOT NULL,
     PRIMARY KEY(pending_community_members_email, permission_level)
 );
+
+CREATE VIEW pending_members_with_permissions_v AS (
+    SELECT
+        pcm.email,
+        pcm.code,
+        ARRAY_TO_JSON(ARRAY_AGG(pmp.permission_level)) AS permission_levels
+    FROM pending_community_members_t pcm
+    LEFT JOIN pending_members_permissions_t pmp ON pmp.pending_community_members_email = pcm.email
+    WHERE pcm.claimed = FALSE
+    GROUP BY pcm.email);
 
 CREATE TABLE volunteer_hours_t (
     id SERIAL PRIMARY KEY,
