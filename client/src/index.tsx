@@ -10,6 +10,7 @@ import { Contact } from "./components/Contact";
 import { Links } from "./components/Links";
 import { Unknown } from "./components/Unknown";
 import { AddUsers } from "./components/AddUsers";
+import WMFORegister from "./components/Register";
 import { PermissionLevel, CommunityMemberRecord, AuthState, EXEC_BOARD_PERMISSIONS, DJ_PERMISSIONS } from "./ts/authState";
 import WMFORequest from "./ts/request";
 import Maybe from "./ts/maybe";
@@ -80,7 +81,7 @@ class App extends React.Component<{}, AppState> {
         });
         const navbar = (
             <ul>
-                <li><Link to="/home">Home</Link></li>
+                <li><Link to="/">{AuthState.getInstance().getState().isJust() ? 'Home' : 'Log In'}</Link></li>
                 {navbarInternals}
             </ul>
         );
@@ -109,7 +110,7 @@ ReactDOM.render((
     <Router history={browserHistory}>
         <Route path="/" component={App}>
             <IndexRoute component={Home} />
-            <Route path="home" component={Home}/>
+            <Route path="/register/:code" component={WMFORegister}/>
             <Route path="add_users" component={AddUsers}/>
             <Route path="show_form" component={ShowForm}/>
             <Route path="volunteer_form" component={Volunteer}/>
