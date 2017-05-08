@@ -1,7 +1,7 @@
 import * as express from 'express';
 import Logger from '../utils/logger';
 import DB from '../db/db';
-import { CommunityMemberRecord, DBResult } from '../db/db';
+import { PendingCommunityMember, CommunityMemberRecord, DBResult } from '../db/db';
 import { HTMLEscapedString, COMMON_FIELD_SHAPES, validateKeys } from '../utils/functionalUtils';
 import { AuthToken, PermissionLevel, ResponseMessage, badRequest, jsonResponse, successResponse } from '../utils/requestUtils';
 import { buildAuthToken, hashPassword } from '../utils/security';
@@ -22,6 +22,26 @@ export async function handleProfile(req: express.Request,
         }
     });
 }
+
+export async function handleGetUnconfirmedAccount(req: express.Request,
+                                                  res: express.Response): Promise<void> {
+    const body: { code: string } = req.body;
+    if (!validateKeys(body, { code: COMMON_FIELD_SHAPES.uuid })) {
+        badRequest(res);
+        return;
+    }
+    try {
+        const result: DBResult<PendingCommunityMember> = await db.dj.getSingleUnconfirmedAccount(body.code);
+        result.caseOf({
+            left: e => badRequest(res, e),
+            right: p => jsonResponse(res, p)
+        });
+    } catch (e) {
+        log.ERROR('oops:', e);
+        badRequest(res, 'DB_ERROR');
+    }
+}
+
 
 export async function handleLogin(req: express.Request,
                                   res: express.Response): Promise<void> {

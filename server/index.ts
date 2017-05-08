@@ -65,6 +65,10 @@ const addPendingMembersBuilder: SecureRouteBuilder =
                                                EXEC_BOARD_PERMISSIONS)
     .setHttpMethod(HttpMethod.POST);
 
+const getUnconfirmedAccountBuilder: InsecureRouteBuilder =
+    <InsecureRouteBuilder>new InsecureRouteBuilder('/api/account/getUnconfirmedAccount', Account_api.handleGetUnconfirmedAccount)
+    .setHttpMethod(HttpMethod.POST);
+
 const loginRoute: InsecureRoute = new InsecureRoute(loginRouteBuilder);
 const registerRoute: InsecureRoute = new InsecureRoute(registerRouteBuilder);
 const logHoursRoute: SecureRoute = new SecureRoute(logHoursBuilder);
@@ -74,6 +78,7 @@ const getUnconfirmedHoursRoute: SecureRoute = new SecureRoute(getUnconfirmedHour
 const insecureRoutes: InsecureRoute[] = [
     registerRoute,
     loginRoute,
+    new InsecureRoute(getUnconfirmedAccountBuilder),
 ];
 
 const secureRoutes: SecureRoute[] = [
