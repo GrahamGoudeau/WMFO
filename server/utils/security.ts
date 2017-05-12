@@ -53,7 +53,6 @@ export function buildAuthToken(email: string, id: number, permissionLevels: Perm
         authorizedAt: new Date(),
         permissionLevels: permissionLevels
     };
-    console.log('Built auth token:', token);
 
     return encrypt(JSON.stringify(token));
 }
