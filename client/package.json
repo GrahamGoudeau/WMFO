@@ -13,11 +13,13 @@
   "license": "ISC",
   "dependencies": {
     "@types/react": "^0.14.55",
+    "@types/react-datepicker": "^0.46.0",
     "@types/react-dom": "^0.14.19",
     "@types/react-router": "^2.0.41",
     "awesome-typescript-loader": "3.0.0-beta.10",
     "copy-webpack-plugin": "^4.0.1",
     "react": "^15.4.1",
+    "react-datepicker": "^0.46.0",
     "react-dnd": "^2.2.4",
     "react-dnd-html5-backend": "^2.2.4",
     "react-dom": "^15.4.1",

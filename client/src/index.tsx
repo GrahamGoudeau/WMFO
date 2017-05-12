@@ -5,7 +5,7 @@ import {Link} from "react-router";
 import { Home } from "./components/Home";
 import { About } from "./components/About";
 import { ShowForm } from "./components/ShowForm"
-import { Volunteer } from "./components/Volunteer";
+import Volunteer from "./components/Volunteer";
 import { Contact } from "./components/Contact";
 import { Links } from "./components/Links";
 import { Unknown } from "./components/Unknown";

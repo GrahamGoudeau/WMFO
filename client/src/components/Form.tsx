@@ -50,11 +50,15 @@ export abstract class FormComponent<P, S> extends Component<P, S> {
         switch (event.target.type) {
             case 'email':
             case 'password':
+            case 'textarea':
             case 'text':
                 value = (event.target as HTMLInputElement).value as string;
                 break;
             case 'checkbox':
                 value = event.target.checked;
+                break;
+            case 'select-one':
+                value = event.target.value;
                 break;
             default:
                 throw new Error(`Unknown input type: ${event.target.type}`);
