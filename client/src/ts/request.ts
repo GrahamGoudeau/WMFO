@@ -43,7 +43,7 @@ export default class WMFORequest {
     }
 
     async POST(url: string, data?: any, headers?: { [headers: string]: string }) {
-        return $.ajax({
+        return await $.ajax({
             url: url,
             method: 'POST',
             headers: Object.assign({}, this.globalHeaders, headers ? headers : {}),
