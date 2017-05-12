@@ -8,6 +8,7 @@ import { browserHistory } from "react-router";
 
 interface AddUsersState {
     signedIn: boolean;
+    addSingle: boolean;
 }
 
 interface AddSingleUserFormState {
@@ -70,7 +71,7 @@ class AddSingleUserForm extends FormComponent<{}, AddSingleUserFormState> {
             });
             console.log('response:', response);
             await this.updateStateAsync('error', false);
-            await this.updateStateAsync('message', `Successfully added user ${this.state.djEmail}! They should receive an email soon.  If not, send them the link from the Pending Users tab.`);
+            await this.updateStateAsync('message', `Successfully added user ${this.state.djEmail}! They should receive an email soon.  If not, send them their unique URL from the Pending Members tab.`);
             this.setState({
                 djEmail: '',
                 isStudentDj: false,
@@ -92,6 +93,7 @@ class AddSingleUserForm extends FormComponent<{}, AddSingleUserFormState> {
     render() {
         return (
             <form onSubmit={this.handleSubmit.bind(this)}>
+            <p style={{ color: '#333', textAlign: 'center' }}>Adding one user</p>
                 <label htmlFor="djEmail">New User Email</label>
                 <input type="email" value={this.state.djEmail} id="djEmail" onChange={this.handleChange.bind(this)}/>
                 <br/>
@@ -116,38 +118,40 @@ export class AddUsers extends Component<{}, AddUsersState> {
     constructor(props: any) {
         super(props);
         this.state = {
-            signedIn: AuthState.getInstance().getState().isJust()
+            signedIn: AuthState.getInstance().getState().isJust(),
+            addSingle: true,
         };
 
         if (!AddUsers.addedListener) {
-            AuthState.getInstance().addListener((m: Maybe<CommunityMemberRecord>) => {
-                this.state = {
-                    signedIn: m.isJust()
-                };
-            });
+            AuthState.getInstance().addListener((m: Maybe<CommunityMemberRecord>) => this.updateState('signedIn', m.isJust()));
             AddUsers.addedListener = true;
         }
     }
 
     async componentDidMount() {
         await AuthState.getInstance().updateState();
-        this.setState({
-            signedIn: AuthState.getInstance().getState().isJust()
-        });
+        this.updateState('signedIn', AuthState.getInstance().getState().isJust());
+    }
+
+    changeForm(addSingle: boolean) {
+        console.log('running', addSingle);
+        this.updateState('addSingle', addSingle);
     }
 
     render() {
         if (!this.state.signedIn) return null;
+        const content = this.state.addSingle ? <AddSingleUserForm/> : null;
         return (
-            <AddSingleUserForm/>
+            <div>
+                <ul style={{
+                    marginTop: '5%',
+                    marginBottom: '2%',
+                }}>
+                    <li><a href="javascript:void(0);" onClick={(event) => this.changeForm.bind(this)(true)}>Add Single User</a></li>
+                    <li><a href="javascript:void(0);" onClick={(event) => this.changeForm.bind(this)(false)}>Add Many Users</a></li>
+                </ul>
+                {content}
+            </div>
         );
     }
 }
-
-/*
-interface AddUsersSecureState {
-    signedIn: boolean;
-}
-
-export class AddUsersSecure extends Component<{}, 
-*/
