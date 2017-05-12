@@ -44,8 +44,7 @@ const logHoursBuilder: SecureRouteBuilder =
 const getUnconfirmedAccountsBuilder: SecureRouteBuilder =
     <SecureRouteBuilder>new SecureRouteBuilder('/api/exec/getUnconfirmedAccounts',
                                                Exec_api.handleGetUnconfirmedAccounts,
-                                               EXEC_BOARD_PERMISSIONS)
-    .setHttpMethod(HttpMethod.POST);
+                                               EXEC_BOARD_PERMISSIONS);
 
 const getUnconfirmedHoursBuilder: SecureRouteBuilder =
     <SecureRouteBuilder>new SecureRouteBuilder('/api/exec/getUnconfirmedHours',
@@ -83,8 +82,8 @@ const insecureRoutes: InsecureRoute[] = [
 
 const secureRoutes: SecureRoute[] = [
     logHoursRoute,
-    getUnconfirmedAccountsBuilder,
-    getUnconfirmedHoursBuilder,
+    new SecureRoute(getUnconfirmedAccountsBuilder),
+    new SecureRoute(getUnconfirmedHoursBuilder),
     new SecureRoute(checkMostRecentAgreementBuilder),
     new SecureRoute(profileRouteBuilder),
     new SecureRoute(addPendingMembersBuilder),

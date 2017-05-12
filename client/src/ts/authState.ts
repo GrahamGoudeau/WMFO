@@ -94,13 +94,13 @@ export class AuthState {
         return this.user;
     }
 
-    async updateState(): Promise<Maybe<CommunityMemberRecord>> {
+    async updateState(forceUpdate: boolean = false): Promise<Maybe<CommunityMemberRecord>> {
         const result = await this.user.caseOf({
             just: async (c: CommunityMemberRecord) => {
                 return Maybe.just<CommunityMemberRecord>(c);
             },
             nothing: async () => {
-                if (this.sentInitialRequest) {
+                if (!forceUpdate && this.sentInitialRequest) {
                     return Maybe.nothing<CommunityMemberRecord>();
                 }
                 const req: WMFORequest = WMFORequest.getInstance();

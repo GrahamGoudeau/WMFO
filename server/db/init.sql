@@ -3,6 +3,10 @@ CREATE DATABASE wmfo_db;
 
 \c wmfo_db;
 
+/* for UUID generation */
+CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
+/* usage: uuid_generate_v4() */
+
 /* create the tables */
 \i tables.sql
 
@@ -22,7 +26,3 @@ VALUES
     ((SELECT id FROM community_members_t WHERE email='pd@wmfo.org'), 'PROGRAMMING_DIRECTOR'),
     ((SELECT id FROM community_members_t WHERE email='ops@wmfo.org'), 'OPERATIONS_DIRECTOR')
 ;
-
-/* for UUID generation */
-CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
-/* usage: uuid_generate_v4() */

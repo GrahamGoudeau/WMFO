@@ -115,9 +115,13 @@ export class HTMLEscapedString {
     get value() { return this._value; }
 
     private static escapeHTML(s: string): string { 
-        return s.replace(/&/g, '&amp;')
-            .replace(/"/g, '&quot;')
-            .replace(/</g, '&lt;')
-            .replace(/>/g, '&gt;');
+        try {
+            return s.replace(/&/g, '&amp;')
+                .replace(/"/g, '&quot;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;');
+        } catch (e) {
+            throw new Error('Could not replace on bad string');
+        }
     }
 }

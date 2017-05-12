@@ -113,5 +113,6 @@ export function jsonResponse(res: express.Response, result: any): void {
 }
 
 export function successResponse(res: express.Response): void {
-    res.status(200).send();
+    //res.status(200).send();
+    jsonResponse(res, {});
 }

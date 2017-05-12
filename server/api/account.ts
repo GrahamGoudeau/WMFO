@@ -2,9 +2,10 @@ import * as express from 'express';
 import Logger from '../utils/logger';
 import DB from '../db/db';
 import { PendingCommunityMember, CommunityMemberRecord, DBResult } from '../db/db';
-import { HTMLEscapedString, COMMON_FIELD_SHAPES, validateKeys } from '../utils/functionalUtils';
+import { validateArrayNonobject, HTMLEscapedString, COMMON_FIELD_SHAPES, validateKeys } from '../utils/functionalUtils';
 import { AuthToken, PermissionLevel, ResponseMessage, badRequest, jsonResponse, successResponse } from '../utils/requestUtils';
 import { buildAuthToken, hashPassword } from '../utils/security';
+import Either from '../utils/either';
 
 const log: Logger = new Logger('account-api');
 const db: DB = DB.getInstance();
@@ -75,28 +76,52 @@ export async function handleLogin(req: express.Request,
 
 export async function handleRegister(req: express.Request,
                                      res: express.Response): Promise<void> {
-    const body: any = req.body;
+    const body: { firstName: string; lastName: string; code: string; password: string } = req.body;
     if (!validateKeys(body, {
             'firstName': COMMON_FIELD_SHAPES.nonemptyString,
             'lastName': COMMON_FIELD_SHAPES.nonemptyString,
-            'email': COMMON_FIELD_SHAPES.email,
+            'code': COMMON_FIELD_SHAPES.uuid,
             'password': COMMON_FIELD_SHAPES.nonemptyString })) {
         badRequest(res);
         return;
     }
 
-    const result: DBResult<number> = await db.dj.register(
-        new HTMLEscapedString(body.firstName),
-        new HTMLEscapedString(body.lastName),
-        new HTMLEscapedString(body.email),
-        hashPassword(body.email, body.password));
+    let userEmail: string;
+    let emailResult: DBResult<string>;
+    try {
+        emailResult = await db.dj.getEmailFromPendingCode(body.code);
+    } catch (e) {
+        log.ERROR('Could not get email from code', body.code);
+        emailResult = Either.Left<ResponseMessage, string>('DB_ERROR');
+    }
 
-    await result.caseOf({
-        left: async (e: ResponseMessage) => badRequest(res, e),
+    const operationResult = await emailResult.asyncBind(async (email: string) => {
+        userEmail = email;
+        try {
+            const escapedEmail: HTMLEscapedString = new HTMLEscapedString(email);
+            const result: DBResult<number> = await db.dj.register(
+                new HTMLEscapedString(body.firstName),
+                new HTMLEscapedString(body.lastName),
+                escapedEmail,
+                hashPassword(email, body.password));
+            await db.dj.claimPendingAccount(escapedEmail);
+            return result;
+        } catch (e) {
+            log.ERROR('register blew up:', e);
+            badRequest(res);
+            return null;
+        }
+    });
+
+    await operationResult.caseOf({
+        left: async (e: ResponseMessage) => {
+            badRequest(res, e);
+        },
         right: async (id: number) => {
-            const permissions: PermissionLevel[] = await db.dj.getPermissionLevels(id);
+            log.INFO('Registered user', userEmail);
+            const permissionLevels: PermissionLevel[] = await db.dj.getPermissionLevels(id);
             jsonResponse(res, {
-                authToken: buildAuthToken(new HTMLEscapedString(body.email).value, id, permissions)
+                authToken: buildAuthToken(new HTMLEscapedString(userEmail).value, id, permissionLevels)
             });
         }
     });

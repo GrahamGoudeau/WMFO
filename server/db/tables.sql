@@ -95,7 +95,7 @@ CREATE TABLE permission_level_t (
 
 CREATE TABLE pending_community_members_t (
     email VARCHAR(100) PRIMARY KEY CHECK (COALESCE(email, '') <> ''),
-    code UUID NOT NULL,
+    code UUID UNIQUE NOT NULL DEFAULT UUID_GENERATE_V4(),
     claimed BOOLEAN NOT NULL DEFAULT FALSE
 );
 

@@ -73,6 +73,12 @@ class DJManagement {
         hasSignedMostRecentAgreement: QueryFile,
         findById: QueryFile,
         getSingleUnconfirmedAccount: QueryFile,
+        getPendingPermissionsByEmail: QueryFile,
+        getEmailFromPendingCode: QueryFile,
+        claimPendingAccount: QueryFile,
+    };
+    private readonly columnSets: {
+        addManyPermissions: pgpLib.ColumnSet,
     };
 
     private readonly log: Logger;
@@ -85,8 +91,18 @@ class DJManagement {
             hasSignedMostRecentAgreement: sql('queries/hasSignedMostRecentAgreement.sql', this.log),
             findById: sql('queries/findById.sql', this.log),
             getSingleUnconfirmedAccount: sql('queries/getSingleUnconfirmedAccount.sql', this.log),
+            getPendingPermissionsByEmail: sql('queries/getPendingPermissionsByEmail.sql', this.log),
+            getEmailFromPendingCode: sql('queries/getEmailFromPendingCode.sql', this.log),
+            claimPendingAccount: sql('queries/claimPendingAccount.sql', this.log),
+        };
+        this.columnSets = {
+            addManyPermissions: new this.pgp.helpers.ColumnSet(['community_member_id', 'permission_level'], {table: 'permission_level_t'}),
         };
 
+    }
+
+    async claimPendingAccount(email: HTMLEscapedString): Promise<void> {
+        await this.db.none(this.queries.claimPendingAccount, [email.value]);
     }
 
     async getPermissionLevels(communityMemberId: number): Promise<PermissionLevel[]> {
@@ -154,20 +170,37 @@ class DJManagement {
         }
     }
 
+    async getEmailFromPendingCode(code: string): DBAsyncResult<string> {
+        try {
+            return Either.Right<ResponseMessage, string>((await this.db.one(this.queries.getEmailFromPendingCode, [code])).email);
+        } catch (e) {
+            return Either.Left<ResponseMessage, string>(buildMessage(e, 'get email from pending', this.log));
+        }
+    }
+
     async register(firstName: HTMLEscapedString,
                    lastName: HTMLEscapedString,
                    email: HTMLEscapedString,
                    passwordHash: string,
                    tuftsId?: number): DBAsyncResult<number> {
         try {
-            const idResult = await this.db.one(this.queries.register,
+            const idResult: number = (await this.db.one(this.queries.register,
                      [firstName.value,
                       lastName.value,
                       email.value,
                       passwordHash,
-                      tuftsId ? tuftsId : null]);
+                      tuftsId ? tuftsId : null])).id;
 
-            return Either.Right<ResponseMessage, number>(idResult.id);
+            const insertInfo = (await this.db.any(this.queries.getPendingPermissionsByEmail, [email.value])).map((record: any) => {
+                return {
+                    community_member_id: idResult,
+                    permission_level: record.permission_level
+                };
+            });
+
+            await this.db.none(this.pgp.helpers.insert(insertInfo, this.columnSets.addManyPermissions));
+
+            return Either.Right<ResponseMessage, number>(idResult);
         } catch (e) {
             return Either.Left<ResponseMessage, number>(buildMessage(e, 'registration', this.log));
         }
@@ -190,13 +223,13 @@ class ExecBoardManagement {
     constructor(private readonly pgp: pgpLib.IMain, private readonly db: pgpLib.IDatabase<any>) {
         this.log = new Logger('exec-management');
         this.queries = {
-            getUnconfirmedAccounts: sql('queries/getunconfirmedAccounts.sql', this.log),
+            getUnconfirmedAccounts: sql('queries/getUnconfirmedAccounts.sql', this.log),
             getHoursByEmail: sql('queries/getHoursByEmail.sql', this.log),
             getUnconfirmedHours: sql('queries/getUnconfirmedHours.sql', this.log),
             addManyDjs: sql('queries/addManyDjs.sql', this.log),
         };
         this.columnSets = {
-            addPendingMembers: new this.pgp.helpers.ColumnSet(['email', 'code'], {table: 'pending_community_members_t'}),
+            addPendingMembers: new this.pgp.helpers.ColumnSet(['email'], {table: 'pending_community_members_t'}),
             addPendingPermissions: new this.pgp.helpers.ColumnSet(['pending_community_members_email', 'permission_level'], {table: 'pending_members_permissions_t'}),
         }
     }
@@ -226,7 +259,9 @@ class ExecBoardManagement {
     }
 
     async getUnconfirmedAccounts(): Promise<PendingCommunityMember[]> {
+        this.log.DEBUG('getting unconfirmed accounts');
         const data = await this.db.any(this.queries.getUnconfirmedAccounts);
+        this.log.DEBUG(data);
         return data.map((record: any) => {
             const member: PendingCommunityMember = {
                 email: record.email,

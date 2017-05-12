@@ -11,27 +11,29 @@ interface AddUsersState {
 }
 
 interface AddSingleUserFormState {
-    djFirstName: string;
-    djLastName: string;
     djEmail: string;
     isStudentDj: boolean;
     isCommunityDj: boolean;
     djConflict: boolean;
     noPermissions: boolean;
+    hasSubmitted: boolean;
+    error: boolean;
+    message: string;
 }
 
 class AddSingleUserForm extends FormComponent<{}, AddSingleUserFormState> {
-    private readonly ADD_SINGLE_USER_URL: string = '/api/exec/addSingleUser';
+    private readonly ADD_SINGLE_USER_URL: string = '/api/exec/addPendingMembers';
     constructor(props: any) {
         super(props);
         this.state = {
-            djFirstName: '',
-            djLastName: '',
             djEmail: '',
             isStudentDj: false,
             isCommunityDj: false,
             djConflict: false,
             noPermissions: false,
+            hasSubmitted: false,
+            error: false,
+            message: ''
         };
     }
 
@@ -57,29 +59,41 @@ class AddSingleUserForm extends FormComponent<{}, AddSingleUserFormState> {
             console.log('error:', this.state);
             return;
         }
+        await this.updateStateAsync('hasSubmitted', true);
         try {
+            console.log('about to send');
             const response = await WMFORequest.getInstance().POST(this.ADD_SINGLE_USER_URL, {
-                firstName: this.state.djFirstName,
-                lastName: this.state.djLastName,
-                permissions: this.buildPermissionArray(),
+                pendingMembers: [{
+                    email: this.state.djEmail,
+                    permissionLevels: this.buildPermissionArray()
+                }]
             });
             console.log('response:', response);
+            await this.updateStateAsync('error', false);
+            await this.updateStateAsync('message', `Successfully added user ${this.state.djEmail}! They should receive an email soon.  If not, send them the link from the Pending Users tab.`);
+            this.setState({
+                djEmail: '',
+                isStudentDj: false,
+                isCommunityDj: false,
+                djConflict: false,
+                noPermissions: false,
+                hasSubmitted: true,
+                error: false,
+                message: this.state.message
+            });
         } catch (e) {
-            console.log('error response:', e);
+            console.log(e);
+            console.log('error response:', e.status);
+            await this.updateStateAsync('error', true);
+            await this.updateStateAsync('message', 'An error occurred! Please make sure that the email is spelled correctly. If this keeps happening, contact the webmaster for help.');
         }
     }
 
     render() {
         return (
             <form onSubmit={this.handleSubmit.bind(this)}>
-                <label htmlFor="djFirstName">First Name</label>
-                <input type="text" id="djFirstName" onChange={this.handleChange.bind(this)}/>
-                <br/>
-                <label htmlFor="djLastName">Last Name</label>
-                <input type="text" id="djLastName" onChange={this.handleChange.bind(this)}/>
-                <br/>
                 <label htmlFor="djEmail">New User Email</label>
-                <input type="email" id="djEmail" onChange={this.handleChange.bind(this)}/>
+                <input type="email" value={this.state.djEmail} id="djEmail" onChange={this.handleChange.bind(this)}/>
                 <br/>
                 <label htmlFor="isStudentDj">Student DJ</label>
                 <input key={this.state.isStudentDj ? 0 : 1} name="isStudentDj" type="checkbox" id="isStudentDj" onChange={this.handleChange.bind(this)} checked={this.state.isStudentDj}/>
@@ -89,6 +103,9 @@ class AddSingleUserForm extends FormComponent<{}, AddSingleUserFormState> {
                 <input key={this.state.isCommunityDj ? 2 : 3} name="isCommunityDj" type="checkbox" id="isCommunityDj" onChange={this.handleChange.bind(this)} checked={this.state.isCommunityDj}/>
                 <br/>
                 <input type="submit" value="Submit"/>
+                <p style={{
+                    display: this.state.hasSubmitted ? 'block' : 'none'
+                }}>{this.state.message}</p>
             </form>
         );
     }
@@ -101,9 +118,7 @@ export class AddUsers extends Component<{}, AddUsersState> {
         this.state = {
             signedIn: AuthState.getInstance().getState().isJust()
         };
-        if (!this.state.signedIn) {
-            browserHistory.push('/');
-        }
+
         if (!AddUsers.addedListener) {
             AuthState.getInstance().addListener((m: Maybe<CommunityMemberRecord>) => {
                 this.state = {
@@ -114,7 +129,15 @@ export class AddUsers extends Component<{}, AddUsersState> {
         }
     }
 
+    async componentDidMount() {
+        await AuthState.getInstance().updateState();
+        this.setState({
+            signedIn: AuthState.getInstance().getState().isJust()
+        });
+    }
+
     render() {
+        if (!this.state.signedIn) return null;
         return (
             <AddSingleUserForm/>
         );

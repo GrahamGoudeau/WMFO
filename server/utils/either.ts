@@ -23,4 +23,18 @@ export default class Either<L, R> {
         }
         return p.right(this.value as R);
     }
+
+    public bind<T>(f: (r: R) => Either<L, T>) {
+        if (this.isLeft) {
+            return Either.Left<L, T>(this.value as L);
+        }
+        return f(this.value as R);
+    }
+
+    public async asyncBind<T>(f: (r: R) => Promise<Either<L, T>>) {
+        if (this.isLeft) {
+            return Either.Left<L, T>(this.value as L);
+        }
+        return await f(this.value as R);
+    }
 }

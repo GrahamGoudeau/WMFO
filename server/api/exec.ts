@@ -54,9 +54,9 @@ export async function handleAddPendingMembers(req: express.Request,
     permissionArrayShape.validation.push((arr: any[]) => {
         return arr.length > 0
     });
+
     if (!validateArray<PendingCommunityMember>(arr, {
                 'email': COMMON_FIELD_SHAPES.email,
-                'code': COMMON_FIELD_SHAPES.uuid,
                 'permissionLevels': permissionArrayShape,
             })) {
 
