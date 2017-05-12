@@ -138,7 +138,7 @@ CREATE TABLE volunteer_hours_t (
     id SERIAL PRIMARY KEY,
     created TIMESTAMP NOT NULL DEFAULT NOW(),
     volunteer_date TIMESTAMP NOT NULL,
-    num_hours INTEGER CHECK (num_hours > 0),
+    num_hours REAL CHECK (num_hours > 0),
     description TEXT CHECK (COALESCE(description, '') <> ''),
     confirmed BOOLEAN NOT NULL DEFAULT FALSE,
     community_member_id INTEGER REFERENCES community_members_t(id) NOT NULL

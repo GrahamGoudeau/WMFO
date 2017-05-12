@@ -76,6 +76,7 @@ class DJManagement {
         getPendingPermissionsByEmail: QueryFile,
         getEmailFromPendingCode: QueryFile,
         claimPendingAccount: QueryFile,
+        logVolunteerHours: QueryFile,
     };
     private readonly columnSets: {
         addManyPermissions: pgpLib.ColumnSet,
@@ -94,6 +95,7 @@ class DJManagement {
             getPendingPermissionsByEmail: sql('queries/getPendingPermissionsByEmail.sql', this.log),
             getEmailFromPendingCode: sql('queries/getEmailFromPendingCode.sql', this.log),
             claimPendingAccount: sql('queries/claimPendingAccount.sql', this.log),
+            logVolunteerHours: sql('queries/logVolunteerHours.sql', this.log),
         };
         this.columnSets = {
             addManyPermissions: new this.pgp.helpers.ColumnSet(['community_member_id', 'permission_level'], {table: 'permission_level_t'}),
@@ -148,6 +150,10 @@ class DJManagement {
             permissionLevels: permissionLevels
         };
         return member;
+    }
+
+    async logVolunteerHours(volunteerDate: Date, numHours: number, description: HTMLEscapedString, id: number): Promise<void> {
+        await this.db.none(this.queries.logVolunteerHours, [volunteerDate, numHours, description.value, id]);
     }
 
     async findById(id: number): DBAsyncResult<CommunityMemberRecord> {

@@ -16,6 +16,7 @@ export async function handleLogHours(req: express.Request,
                   numHours: number,
                   description: string,
     } = req.body;
+    body.numHours = parseFloat(req.body.numHours as string);
     if (!validateKeys(body, {
             volunteerDate: COMMON_FIELD_SHAPES.dateString,
             numHours: COMMON_FIELD_SHAPES.nonnegativeNum,
@@ -23,7 +24,14 @@ export async function handleLogHours(req: express.Request,
         badRequest(res);
         return;
     }
-    res.send('log');
+    try {
+        await db.dj.logVolunteerHours(new Date(body.volunteerDate), body.numHours, new HTMLEscapedString(body.description), authToken.id);
+        successResponse(res);
+    } catch (e) {
+        log.ERROR('exception while logging volunteer hours from', authToken.email);
+        log.ERROR(e);
+        badRequest(res, 'DB_ERROR');
+    }
 }
 
 export async function handleCheckMostRecentAgreement(req: express.Request,
