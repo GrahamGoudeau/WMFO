@@ -8,4 +8,4 @@ SELECT
     cm.email
 FROM volunteer_hours_t vh
 JOIN community_members_t cm ON vh.community_member_id = cm.id
-WHERE cm.email = $1;
+WHERE cm.email = $1 AND vh.deleted = FALSE;

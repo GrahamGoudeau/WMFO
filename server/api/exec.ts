@@ -39,6 +39,34 @@ export async function handleGetUnconfirmedHours(req: express.Request,
     }
 }
 
+export async function handleResolveHours(req: express.Request,
+                                         res: express.Response,
+                                         authToken: AuthToken,
+                                         toDelete: boolean): Promise<void> {
+    if (!req.body || !req.body.hoursId) {
+        badRequest(res);
+        return;
+    }
+
+    const body: { hoursId: number} = req.body;
+    body.hoursId = parseInt(req.body.hoursId);
+
+    if (!validateKeys(body, {
+            hoursId: COMMON_FIELD_SHAPES.nonnegativeNum, })) {
+        badRequest(res);
+        return;
+    }
+
+    try {
+        await db.exec.resolveHours(body.hoursId, toDelete);
+        log.INFO('User', authToken.email, toDelete ? 'deleting' : 'approving', 'hours for hours id', body.hoursId);
+        successResponse(res);
+    } catch (e) {
+        log.ERROR('exception while user', authToken.email, toDelete ? 'deleting' : 'approving', 'hours');
+        badRequest(res, 'DB_ERROR');
+        return;
+    }
+}
 export async function handleAddPendingMembers(req: express.Request,
                                               res: express.Response,
                                               authToken: AuthToken): Promise<void> {
@@ -63,7 +91,12 @@ export async function handleAddPendingMembers(req: express.Request,
         badRequest(res);
         return;
     }
-    const result: DBResult<{}> = await db.exec.addPendingMembers(arr);
+    const result: DBResult<{}> = await db.exec.addPendingMembers(arr.map((entry) => { 
+        return {
+            email: entry.email.toLowerCase(),
+            permissionLevels: entry.permissionLevels
+        }
+    }));
     result.caseOf({
         right: (_) => {
             log.INFO('User', authToken.email, 'added', arr.length, 'users');

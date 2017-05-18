@@ -91,7 +91,7 @@ class LoggerModule {
         function getStackTrace(): string {
            return new Error().stack;
         };
-        if (this.level === DebugLevel.ERROR && this.isProduction) {
+        if (this.level === DebugLevel.ERROR) {
             /*
             const emailer: IEmailer = getEmailerInstance();
             emailer.errorAlert(message);
