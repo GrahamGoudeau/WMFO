@@ -314,7 +314,8 @@ export class ExecVolunteerReview extends Component<{}, ExecVolunteerReviewState>
             color: '#333',
             backgroundColor: '#fefefe',
             borderRadius: '7px',
-            padding: '1%',
+            paddingTop: '2%',
+            paddingBottom: '2%',
             marginTop: '2%',
             textAlign: 'center',
             overflow: 'scroll',
@@ -341,6 +342,7 @@ export class ExecVolunteerReview extends Component<{}, ExecVolunteerReviewState>
 
         return (
             <div style={{width: '100%', overflow: 'scroll'}}>
+                <p style={style}>Confirmed hours will count towards a DJ's total amount of worked volunteer hours. Deleted hours will not.</p>
                 <table style={Object.assign({}, style, {tableLayout: 'fixed'})}>
                     <h3>Hours Pending Approval:</h3>
                     <hr/>

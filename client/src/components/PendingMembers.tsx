@@ -66,8 +66,9 @@ export default class PendingMembers extends Component<{}, PendingMembersState> {
             const noticeStyle = {
                 color: '#333',
                 backgroundColor: '#fefefe',
+                paddingTop: '2%',
+                paddingBottom: '2%',
                 borderRadius: '7px',
-                padding: '1%',
                 marginTop: '2%',
                 textAlign: 'center',
             };
