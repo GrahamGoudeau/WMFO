@@ -189,7 +189,7 @@ class ReviewHours extends Component<{}, ReviewHoursState> {
                 (<tr>
                     <td>{dateToHumanReadable(new Date(hours.volunteerDate)).split(' ')[0]}</td>
                     <td>{hours.numHours}</td>
-                    <td><div style={{overflow: 'auto', width: '100%'}}>{hours.description}</div></td>
+                    <td><div style={{overflow: 'scroll', width: '100%'}}>{hours.description}</div></td>
                     <td>{hours.confirmed ? 'Yes' : 'No'}</td>
                     <td>{dateToHumanReadable(new Date(hours.created)).split(' ')[0]}</td>
                 </tr>));
