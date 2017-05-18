@@ -135,6 +135,15 @@ interface VolunteerHours {
     email: string;
 }
 
+// sort volunteer hours by most recent volunteer date
+function volunteerDateComparator(vh1: VolunteerHours, vh2: VolunteerHours): number {
+    const date1 = new Date(vh1.volunteerDate);
+    const date2 = new Date(vh2.volunteerDate);
+    if (date1 < date2) return 1;
+    if (date2 < date1) return -1;
+    return 0;
+}
+
 interface ReviewHoursState {
     querying: boolean;
     hours: VolunteerHours[];
@@ -177,13 +186,8 @@ class ReviewHours extends Component<{}, ReviewHoursState> {
         };
         const rows = this.state.hours
             // sort by most recent volunteer date first
-            .sort((vh1: VolunteerHours, vh2: VolunteerHours) => {
-                const date1 = new Date(vh1.volunteerDate);
-                const date2 = new Date(vh2.volunteerDate);
-                if (date1 < date2) return 1;
-                if (date2 < date1) return -1;
-                return 0;
-            })
+            .sort(volunteerDateComparator)
+
             // convert to HTML table rows
             .map((hours: VolunteerHours) =>
                 (<tr>
@@ -250,6 +254,106 @@ export class DJVolunteer extends Component<{}, VolunteerState> {
             <div>
                 {options}
                 {content}
+            </div>
+        );
+    }
+}
+
+interface ExecVolunteerReviewState {
+    unconfirmedHours: VolunteerHours[];
+    querying: boolean;
+}
+
+export class ExecVolunteerReview extends Component<{}, ExecVolunteerReviewState> {
+    private readonly GET_HOURS_EXEC_URL: string = '/api/exec/getUnconfirmedHours';
+    private readonly CONFIRM_HOURS_URL: string = '/api/exec/approveHours';
+    private readonly DELETE_HOURS_URL: string = '/api/exec/deleteHours';
+
+    constructor(props: {}) {
+        super(props);
+        this.state = {
+            querying: true,
+            unconfirmedHours: [],
+        };
+    }
+
+    async componentDidMount() {
+        await AuthState.getInstance().updateState();
+        try {
+            const response = await WMFORequest.getInstance().GET(this.GET_HOURS_EXEC_URL);
+            await this.updateStateAsync('unconfirmedHours', response.data);
+            console.log('res', response);
+        } catch (e) {
+            console.log('error:', e);
+        }
+        await this.updateStateAsync('querying', false);
+    }
+
+    private async resolveHours(id: number, toDelete: boolean) {
+        const url: string = toDelete ? this.DELETE_HOURS_URL : this.CONFIRM_HOURS_URL;
+        const hours: VolunteerHours = this.state.unconfirmedHours.find((hours: VolunteerHours) => hours.id === id);
+        if (toDelete && !confirm(`Are you sure you want to delete ${hours.numHours} hours from ${hours.email}?`)) {
+            return;
+        }
+
+        try {
+            const response = await WMFORequest.getInstance().POST(url, {
+                hoursId: id
+            });
+
+            await this.updateStateAsync('unconfirmedHours', this.state.unconfirmedHours.filter((hours: VolunteerHours) => hours.id !== id));
+        } catch (e) {
+            console.log('error resolving:', e);
+            alert('Something went wrong while resolving these hours!  If the problem persists, contact the webmaster.');
+        }
+    }
+
+    render() {
+        if (this.state.querying) return null;
+        const style = {
+            color: '#333',
+            backgroundColor: '#fefefe',
+            borderRadius: '7px',
+            padding: '1%',
+            marginTop: '2%',
+            textAlign: 'center',
+            overflow: 'scroll',
+            width: '100%',
+        };
+        if (this.state.unconfirmedHours.length === 0) {
+            return <p style={style}>No pending hours.</p>
+        }
+
+        const rows = this.state.unconfirmedHours
+            .sort(volunteerDateComparator)
+            .map((hours: VolunteerHours) =>
+                (<tr>
+                    <td>{hours.email}</td>
+                    <td>{dateToHumanReadable(new Date(hours.volunteerDate)).split(' ')[0]}</td>
+                    <td>{dateToHumanReadable(new Date(hours.created)).split(' ')[0]}</td>
+                    <td>{hours.numHours}</td>
+                    <td><div style={{overflow: 'scroll', width: '100%'}}>{hours.description}</div></td>
+                    <td>
+                        <a href="javascript:void(0);" onClick={e => this.resolveHours(hours.id, false)}>Confirm</a>
+                        /
+                        <a href="javascript:void(0);" onClick={e => this.resolveHours(hours.id, true)}>Delete</a></td>
+                </tr>));
+
+        return (
+            <div style={{width: '100%', overflow: 'scroll'}}>
+                <table style={Object.assign({}, style, {tableLayout: 'fixed'})}>
+                    <h3>Hours Pending Approval:</h3>
+                    <hr/>
+                    <tr>
+                        <th>User email</th>
+                        <th>Date volunteered</th>
+                        <th>Date logged</th>
+                        <th>Number of hours worked</th>
+                        <th>Description of task</th>
+                        <th>Confirm?</th>
+                    </tr>
+                    {rows}
+                </table>
             </div>
         );
     }

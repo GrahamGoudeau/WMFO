@@ -5,7 +5,7 @@ import {Link} from "react-router";
 import { Home } from "./components/Home";
 import { About } from "./components/About";
 import { ShowForm } from "./components/ShowForm"
-import { DJVolunteer } from "./components/Volunteer";
+import { ExecVolunteerReview, DJVolunteer } from "./components/Volunteer";
 import { Contact } from "./components/Contact";
 import { Links } from "./components/Links";
 import { Unknown } from "./components/Unknown";
@@ -117,6 +117,7 @@ ReactDOM.render((
             <Route path="/add_users" component={AddUsers}/>
             <Route path="/show_form" component={ShowForm}/>
             <Route path="/volunteer_hours" component={DJVolunteer}/>
+            <Route path="/review_hours" component={ExecVolunteerReview}/>
             <Route path="/contact" component={Contact}/>
             <Route path="/links" component ={Links}/>
             <Route path="/*" component={Unknown}/>

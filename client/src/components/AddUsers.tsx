@@ -5,10 +5,11 @@ import Component from "./Component";
 import { FormComponent, ErrorState } from "./Form";
 import WMFORequest from "../ts/request";
 import { browserHistory } from "react-router";
+import { Message } from "./Message";
 
 interface AddUsersState {
     signedIn: boolean;
-    addSingle: boolean;
+    addSingle: Maybe<boolean>;
 }
 
 interface AddSingleUserFormState {
@@ -22,8 +23,9 @@ interface AddSingleUserFormState {
     message: string;
 }
 
+const ADD_USERS_URL: string = '/api/exec/addPendingMembers';
+
 class AddSingleUserForm extends FormComponent<{}, AddSingleUserFormState> {
-    private readonly ADD_SINGLE_USER_URL: string = '/api/exec/addPendingMembers';
     constructor(props: any) {
         super(props);
         this.state = {
@@ -62,8 +64,7 @@ class AddSingleUserForm extends FormComponent<{}, AddSingleUserFormState> {
         }
         await this.updateStateAsync('hasSubmitted', true);
         try {
-            console.log('about to send');
-            const response = await WMFORequest.getInstance().POST(this.ADD_SINGLE_USER_URL, {
+            const response = await WMFORequest.getInstance().POST(ADD_USERS_URL, {
                 pendingMembers: [{
                     email: this.state.djEmail,
                     permissionLevels: this.buildPermissionArray()
@@ -113,13 +114,150 @@ class AddSingleUserForm extends FormComponent<{}, AddSingleUserFormState> {
     }
 }
 
+interface AddMultipleUserFormState {
+    communityDJs: string;
+    communityDJsError: boolean;
+    studentDJs: string;
+    studentDJsError: boolean;
+    bothBlank: boolean;
+    hasSubmitted: boolean;
+    submitError: boolean;
+};
+
+class AddMultipleUserForm extends FormComponent<{}, AddMultipleUserFormState> {
+    constructor(props: {}) {
+        super(props);
+        this.state = {
+            communityDJs: '',
+            communityDJsError: false,
+            studentDJs: '',
+            studentDJsError: false,
+            bothBlank: false,
+            hasSubmitted: false,
+            submitError: false,
+        };
+    }
+
+    private readonly EMAIL_LIST_REGEX: RegExp = /^\s*([\w+-.%]+@[\w-.]+\.[A-Za-z]+,*[\W]*)+\s*$/;
+
+    private readonly errorStates: ErrorState<AddMultipleUserFormState>[] = [{
+        field: 'communityDJsError',
+        condition: (state: AddMultipleUserFormState) => state.communityDJs.length > 0 && !this.EMAIL_LIST_REGEX.test(state.communityDJs)
+    }, {
+        field: 'studentDJsError',
+        condition: (state: AddMultipleUserFormState) => state.studentDJs.length > 0 && !this.EMAIL_LIST_REGEX.test(state.studentDJs)
+    }, {
+        field: 'bothBlank',
+        condition: (state: AddMultipleUserFormState) => state.studentDJs.length === 0 && state.communityDJs.length === 0
+    }];
+
+    async handleSubmit(event: any) {
+        event.preventDefault();
+        if (await this.errorCheck(this.state, this.errorStates)) {
+            return;
+        }
+        await this.updateStateAsync('hasSubmitted', true);
+        const getEmails = (textareaValue: string) => textareaValue.split(',').filter(s => s.length > 0 && /\S/.test(s));
+
+        // check for duplicates
+        const studentDJEmails = getEmails(this.state.studentDJs);
+        const communityDJEmails = getEmails(this.state.communityDJs);
+
+        function findDuplicate(emails: string[]): string {
+            const seenEmails: { [email: string]: boolean } = {};
+            const duplicate = emails.reduce((acc: string, email: string) => {
+                if (acc != null) return acc;
+                if (seenEmails[email] != null) return email;
+                seenEmails[email] = true;
+                return acc;
+            }, null);
+            return duplicate;
+        };
+
+        const duplicateStudentEmail = findDuplicate(studentDJEmails);
+        if (duplicateStudentEmail != null) {
+            alert(`Duplicate student DJ email: ${duplicateStudentEmail}`);
+            return;
+        }
+
+        const duplicateCommunityEmail = findDuplicate(communityDJEmails);
+        if (duplicateCommunityEmail != null) {
+            alert(`Duplicate community DJ email: ${duplicateCommunityEmail}`);
+            return;
+        }
+
+        const allEmails = studentDJEmails.concat(communityDJEmails);
+        const duplicateEmail = findDuplicate(allEmails);
+        if (duplicateEmail != null) {
+            alert(`Email ${duplicateEmail} entered in both lists`);
+            return;
+        }
+
+        const pendingMembers: { email: string, permissionLevels: PermissionLevel[] }[] = [];
+        studentDJEmails.forEach((email: string) =>
+            pendingMembers.push({
+                email: email,
+                permissionLevels: ['STUDENT_DJ']
+            }));
+        communityDJEmails.forEach((email: string) =>
+            pendingMembers.push({
+                email: email,
+                permissionLevels: ['COMMUNITY_DJ']
+            }));
+
+        try {
+            const response = await WMFORequest.getInstance().POST(ADD_USERS_URL, {
+                pendingMembers: pendingMembers
+            });
+            await this.updateStateAsync('submitError', false);
+            await this.setStateAsync({
+                communityDJs: '',
+                communityDJsError: false,
+                studentDJs: '',
+                studentDJsError: false,
+                bothBlank: false,
+                hasSubmitted: true,
+                submitError: false,
+            });
+        } catch (e) {
+            console.log('err', e)
+            await this.updateStateAsync('submitError', true);
+        }
+        await this.updateStateAsync('hasSubmitted', true);
+    }
+
+    render() {
+        const sentMessage = this.state.submitError ?
+            'An error occurred while submitting. Make sure none of the emails you entered are already users.  If the error keeps occurring, contact the webmaster.' :
+            'Successfully submitted! All new users will soon receive an email with their unique code.  If the email does not send, go to the \'Pending Members\' tab to find their unique code and send it to them manually.';
+        return (
+            <form onSubmit={this.handleSubmit.bind(this)}>
+                <p style={{color: '#333', textAlign: 'center' }}>Fill out at least one of the boxes below to add multiple users.</p>
+                <p style={{color: '#333', textAlign: 'center' }}>Enter comma-separated lists of email addresses</p>
+                <label>Student DJs (batch entry)</label>
+                <textarea id="studentDJs" value={this.state.studentDJs} onChange={this.handleChange.bind(this)}/>
+                <Message showCondition={this.state.studentDJsError} message="Must be comma-separated email addresses" style={{color: 'red'}}/>
+                <br/>
+
+                <label>Community DJs (batch entry)</label>
+                <textarea id="communityDJs" value={this.state.communityDJs} onChange={this.handleChange.bind(this)}/>
+                <Message showCondition={this.state.communityDJsError} message="Must be comma-separated email addresses" style={{color: 'red'}}/>
+                <br/>
+                <Message showCondition={this.state.bothBlank} message="Cannot have both fields blank" style={{color: 'red'}}/>
+                <Message showCondition={this.state.hasSubmitted} message={sentMessage} style={{}}/>
+                <input type="submit" value="Submit"/>
+            </form>
+        );
+    }
+}
+
 export class AddUsers extends Component<{}, AddUsersState> {
     private static addedListener: boolean = false;
     constructor(props: any) {
         super(props);
         this.state = {
             signedIn: AuthState.getInstance().getState().isJust(),
-            addSingle: true,
+            addSingle: Maybe.nothing<boolean>(),
         };
 
         if (!AddUsers.addedListener) {
@@ -134,12 +272,16 @@ export class AddUsers extends Component<{}, AddUsersState> {
     }
 
     changeForm(addSingle: boolean) {
-        this.updateState('addSingle', addSingle);
+        this.updateState('addSingle', Maybe.just<boolean>(addSingle));
     }
 
     render() {
         if (!this.state.signedIn) return null;
-        const content = this.state.addSingle ? <AddSingleUserForm/> : null;
+
+        const content = this.state.addSingle.caseOf({
+            nothing: () => null,
+            just: (addSingle: boolean) => addSingle ? <AddSingleUserForm/> : <AddMultipleUserForm/>
+        });
         return (
             <div>
                 <ul style={{

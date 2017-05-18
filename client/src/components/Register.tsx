@@ -1,5 +1,5 @@
 import * as React from "react";
-import { browserHistory } from "react-router";
+import { Link, browserHistory } from "react-router";
 import Maybe from "../ts/maybe";
 import { PermissionLevel, AuthState, CommunityMemberRecord } from "../ts/authState";
 import Component from "./Component";
@@ -102,7 +102,6 @@ export default class WMFORegister extends FormComponent<RegisterProps, RegisterS
 
     render() {
         let contents;
-        console.log(this.state.badCode, this.state.code.isJust());
         if (!this.state.badCode && this.state.code.isJust()) {
             contents = (
                 <form onSubmit={this.handleSubmit.bind(this)}>
@@ -130,7 +129,13 @@ export default class WMFORegister extends FormComponent<RegisterProps, RegisterS
             );
         } else {
             contents = (
-                <div>{'Unrecognized code :('}</div>
+                <p style={{
+                    color: '#333',
+                    backgroundColor: '#fefefe',
+                    borderRadius: '7px',
+                    padding: '3%',
+                    textAlign: 'center'
+                }}>Looks like you got the wrong code! Have you already registered? Try signing in <Link to="/">here</Link></p>
             );
         }
         return (
