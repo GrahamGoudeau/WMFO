@@ -1,7 +1,7 @@
 import * as express from 'express';
 import Logger from '../utils/logger';
 import DB from '../db/db';
-import { CommunityMemberRecord, DBResult } from '../db/db';
+import { VolunteerHours, CommunityMemberRecord, DBResult } from '../db/db';
 import { HTMLEscapedString, COMMON_FIELD_SHAPES, validateKeys } from '../utils/functionalUtils';
 import { AuthToken, PermissionLevel, ResponseMessage, badRequest, jsonResponse, successResponse } from '../utils/requestUtils';
 import { buildAuthToken, hashPassword } from '../utils/security';
@@ -26,9 +26,24 @@ export async function handleLogHours(req: express.Request,
     }
     try {
         await db.dj.logVolunteerHours(new Date(body.volunteerDate), body.numHours, new HTMLEscapedString(body.description), authToken.id);
+        log.INFO('User', authToken.email, 'reporting', body.numHours, 'of volunteer hours');
         successResponse(res);
     } catch (e) {
         log.ERROR('exception while logging volunteer hours from', authToken.email);
+        log.ERROR(e);
+        badRequest(res, 'DB_ERROR');
+    }
+}
+
+export async function handleGetVolunteerHours(req: express.Request,
+                                              res: express.Response,
+                                              authToken: AuthToken): Promise<void> {
+    try {
+        const data: VolunteerHours[] = await db.dj.getVolunteerHours(authToken.id);
+        log.INFO('User', authToken.email, 'requesting their volunteer hours');
+        jsonResponse(res, data);
+    } catch (e) {
+        log.ERROR('exception while retrieving volunteer hours for', authToken.email);
         log.ERROR(e);
         badRequest(res, 'DB_ERROR');
     }

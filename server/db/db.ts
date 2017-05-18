@@ -77,6 +77,7 @@ class DJManagement {
         getEmailFromPendingCode: QueryFile,
         claimPendingAccount: QueryFile,
         logVolunteerHours: QueryFile,
+        getVolunteerHours: QueryFile,
     };
     private readonly columnSets: {
         addManyPermissions: pgpLib.ColumnSet,
@@ -96,6 +97,7 @@ class DJManagement {
             getEmailFromPendingCode: sql('queries/getEmailFromPendingCode.sql', this.log),
             claimPendingAccount: sql('queries/claimPendingAccount.sql', this.log),
             logVolunteerHours: sql('queries/logVolunteerHours.sql', this.log),
+            getVolunteerHours: sql('queries/getVolunteerHours.sql', this.log),
         };
         this.columnSets = {
             addManyPermissions: new this.pgp.helpers.ColumnSet(['community_member_id', 'permission_level'], {table: 'permission_level_t'}),
@@ -110,6 +112,22 @@ class DJManagement {
     async getPermissionLevels(communityMemberId: number): Promise<PermissionLevel[]> {
         const data = await this.db.any(this.queries.getPermissionLevels, [communityMemberId]);
         return data.map((obj: any) => obj.permission_level);
+    }
+
+    async getVolunteerHours(communityMemberId: number): Promise<VolunteerHours[]> {
+        const data = await this.db.any(this.queries.getVolunteerHours, [communityMemberId]);
+        return data.map((record: any) => {
+            const hours: VolunteerHours = {
+                id: record.id,
+                created: record.created,
+                volunteerDate: record.volunteer_date,
+                numHours: record.num_hours,
+                description: record.description,
+                confirmed: record.confirmed,
+                email: record.email
+            };
+            return hours;
+        });
     }
 
     async getSingleUnconfirmedAccount(code: string): DBAsyncResult<PendingCommunityMember> {

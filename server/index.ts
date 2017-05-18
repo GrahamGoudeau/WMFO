@@ -73,6 +73,7 @@ const registerRoute: InsecureRoute = new InsecureRoute(registerRouteBuilder);
 const logHoursRoute: SecureRoute = new SecureRoute(logHoursBuilder);
 const getUnconfirmedAccountsRoute: SecureRoute = new SecureRoute(getUnconfirmedAccountsBuilder);
 const getUnconfirmedHoursRoute: SecureRoute = new SecureRoute(getUnconfirmedHoursBuilder);
+const getVolunteerHours: SecureRouteBuilder = new SecureRouteBuilder('/api/dj/getVolunteerHours', DJ_api.handleGetVolunteerHours, DJ_PERMISSIONS);
 
 const insecureRoutes: InsecureRoute[] = [
     registerRoute,
@@ -87,12 +88,14 @@ const secureRoutes: SecureRoute[] = [
     new SecureRoute(checkMostRecentAgreementBuilder),
     new SecureRoute(profileRouteBuilder),
     new SecureRoute(addPendingMembersBuilder),
+    new SecureRoute(getVolunteerHours),
 ];
 
 routeManager.addInsecureRoutes(insecureRoutes);
 routeManager.addSecureRoutes(secureRoutes);
 
 app.get('/dist/*', (_, res: express.Response) => res.status(404).send());
+app.get('/api/*', (_, res: express.Response) => res.status(404).send());
 app.get('/*', (_, res: express.Response) => {
     res.sendFile(path.resolve(`${clientDir}/../index.html`));
 });
