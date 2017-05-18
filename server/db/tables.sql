@@ -141,7 +141,8 @@ CREATE TABLE volunteer_hours_t (
     num_hours REAL CHECK (num_hours > 0),
     description TEXT CHECK (COALESCE(description, '') <> ''),
     confirmed BOOLEAN NOT NULL DEFAULT FALSE,
-    community_member_id INTEGER REFERENCES community_members_t(id) NOT NULL
+    community_member_id INTEGER REFERENCES community_members_t(id) NOT NULL,
+    deleted BOOLEAN NOT NULL DEFAULT FALSE
 );
 
 CREATE TABLE show_check_in_t (

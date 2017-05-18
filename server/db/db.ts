@@ -36,7 +36,7 @@ export interface CommunityMemberRecord {
 
 export interface PendingCommunityMember {
     email: string;
-    code: string;
+    code?: string;
     permissionLevels: PermissionLevel[];
 }
 
@@ -238,6 +238,8 @@ class ExecBoardManagement {
         getHoursByEmail: QueryFile,
         getUnconfirmedHours: QueryFile,
         addManyDjs: QueryFile,
+        approveHours: QueryFile,
+        deleteHours: QueryFile,
     };
     private readonly columnSets: {
         addPendingMembers: pgpLib.ColumnSet,
@@ -251,6 +253,8 @@ class ExecBoardManagement {
             getHoursByEmail: sql('queries/getHoursByEmail.sql', this.log),
             getUnconfirmedHours: sql('queries/getUnconfirmedHours.sql', this.log),
             addManyDjs: sql('queries/addManyDjs.sql', this.log),
+            approveHours: sql('queries/approveHours.sql', this.log),
+            deleteHours: sql('queries/deleteHours.sql', this.log),
         };
         this.columnSets = {
             addPendingMembers: new this.pgp.helpers.ColumnSet(['email'], {table: 'pending_community_members_t'}),
@@ -270,7 +274,7 @@ class ExecBoardManagement {
             })
         );
         try {
-            await this.db.tx(t => {
+            const data = await this.db.tx(t => {
                 const q1 = t.none(this.pgp.helpers.insert(values, this.columnSets.addPendingMembers));
                 const q2 = t.none(this.pgp.helpers.insert(permissionValues, this.columnSets.addPendingPermissions));
 
@@ -280,6 +284,15 @@ class ExecBoardManagement {
             return Either.Left<ResponseMessage, {}>(buildMessage(e, 'add pending members', this.log));
         }
         return Either.Right<ResponseMessage, {}>({});
+    }
+
+    async approveHours(hoursId: number): Promise<void> {
+        await this.db.none(this.queries.approveHours, [hoursId]);
+    }
+
+    async resolveHours(hoursId: number, toDelete: boolean): Promise<void> {
+        if (toDelete) await this.db.none(this.queries.deleteHours, [hoursId]);
+        else await this.db.none(this.queries.approveHours, [hoursId]);
     }
 
     async getUnconfirmedAccounts(): Promise<PendingCommunityMember[]> {

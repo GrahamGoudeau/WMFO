@@ -49,8 +49,7 @@ const getUnconfirmedAccountsBuilder: SecureRouteBuilder =
 const getUnconfirmedHoursBuilder: SecureRouteBuilder =
     <SecureRouteBuilder>new SecureRouteBuilder('/api/exec/getUnconfirmedHours',
                                                Exec_api.handleGetUnconfirmedHours,
-                                               EXEC_BOARD_PERMISSIONS)
-    .setHttpMethod(HttpMethod.POST);
+                                               EXEC_BOARD_PERMISSIONS);
 
 const checkMostRecentAgreementBuilder: SecureRouteBuilder =
     <SecureRouteBuilder>new SecureRouteBuilder('/api/dj/checkMostRecentAgreement',
@@ -67,6 +66,16 @@ const addPendingMembersBuilder: SecureRouteBuilder =
 const getUnconfirmedAccountBuilder: InsecureRouteBuilder =
     <InsecureRouteBuilder>new InsecureRouteBuilder('/api/account/getUnconfirmedAccount', Account_api.handleGetUnconfirmedAccount)
     .setHttpMethod(HttpMethod.POST);
+
+const approveHours: SecureRouteBuilder =
+    <SecureRouteBuilder>new SecureRouteBuilder('/api/exec/approveHours',
+        (req, res, token) => Exec_api.handleResolveHours(req, res, token, false),
+        EXEC_BOARD_PERMISSIONS).setHttpMethod(HttpMethod.POST);
+
+const deleteHours: SecureRouteBuilder =
+    <SecureRouteBuilder>new SecureRouteBuilder('/api/exec/deleteHours',
+        (req, res, token) => Exec_api.handleResolveHours(req, res, token, true),
+        EXEC_BOARD_PERMISSIONS).setHttpMethod(HttpMethod.POST);
 
 const loginRoute: InsecureRoute = new InsecureRoute(loginRouteBuilder);
 const registerRoute: InsecureRoute = new InsecureRoute(registerRouteBuilder);
@@ -89,6 +98,8 @@ const secureRoutes: SecureRoute[] = [
     new SecureRoute(profileRouteBuilder),
     new SecureRoute(addPendingMembersBuilder),
     new SecureRoute(getVolunteerHours),
+    new SecureRoute(approveHours),
+    new SecureRoute(deleteHours),
 ];
 
 routeManager.addInsecureRoutes(insecureRoutes);

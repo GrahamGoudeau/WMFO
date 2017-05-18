@@ -54,8 +54,8 @@ export async function handleLogin(req: express.Request,
         return;
     }
     try {
-        const result: DBResult<CommunityMemberRecord> = await db.dj.findByEmailAndPassword(new HTMLEscapedString(body.email),
-                                                                                       hashPassword(body.email, body.password));
+        const result: DBResult<CommunityMemberRecord> = await db.dj.findByEmailAndPassword(new HTMLEscapedString(body.email.toLowerCase()),
+                                                                                       hashPassword(body.email.toLowerCase(), body.password));
         result.caseOf({
             left: e => badRequest(res, e),
             right: c => {
