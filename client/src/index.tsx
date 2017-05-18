@@ -5,7 +5,7 @@ import {Link} from "react-router";
 import { Home } from "./components/Home";
 import { About } from "./components/About";
 import { ShowForm } from "./components/ShowForm"
-import Volunteer from "./components/Volunteer";
+import { DJVolunteer } from "./components/Volunteer";
 import { Contact } from "./components/Contact";
 import { Links } from "./components/Links";
 import { Unknown } from "./components/Unknown";
@@ -48,7 +48,7 @@ class App extends React.Component<{}, AppState> {
         const djNavbar = (
             <div>
                 <li><Link to="/show_form">Request Show Form</Link></li>
-                <li><Link to="/volunteer_form">Log Volunteer Hours</Link></li>
+                <li><Link to="/volunteer_hours">Volunteer Hours</Link></li>
                 <li><Link to="/links">Important Links</Link></li>
             </div>
         );
@@ -96,7 +96,7 @@ class App extends React.Component<{}, AppState> {
             </div>
         );
         return (
-            <div>
+            <div style={{ width: '100%', height: '100%'}}>
                 <Link to="/">
                     <img id="logo" src="/dist/static/img/Logo-1.png" alt="WMFO"/>
                 </Link>
@@ -114,12 +114,12 @@ ReactDOM.render((
             <IndexRoute component={Home} />
             <Route path="/register/:code" component={WMFORegister}/>
             <Route path="/pending_members" component={PendingMembers}/>
-            <Route path="add_users" component={AddUsers}/>
-            <Route path="show_form" component={ShowForm}/>
-            <Route path="volunteer_form" component={Volunteer}/>
-            <Route path="contact" component={Contact}/>
-            <Route path="links" component ={Links}/>
-            <Route path="*" component={Unknown}/>
+            <Route path="/add_users" component={AddUsers}/>
+            <Route path="/show_form" component={ShowForm}/>
+            <Route path="/volunteer_hours" component={DJVolunteer}/>
+            <Route path="/contact" component={Contact}/>
+            <Route path="/links" component ={Links}/>
+            <Route path="/*" component={Unknown}/>
         </Route>
     </Router>
 ), document.getElementById('wmfo-content'));

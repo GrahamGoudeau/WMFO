@@ -20,7 +20,7 @@ interface PendingMembersState {
 export default class PendingMembers extends Component<{}, PendingMembersState> {
     private readonly GET_MEMBERS_URL: string = '/api/exec/getUnconfirmedAccounts';
     private static ATTACHED_LISTENER: boolean = false;
-    private readonly BASE_URL: string = 'www.TEST-URL.com'; //TODO: UPDATE URL
+    private readonly BASE_URL: string = window.location.host;
 
     constructor(props: any) {
         super(props);
@@ -94,7 +94,9 @@ export default class PendingMembers extends Component<{}, PendingMembersState> {
                     <table style={{
                         backgroundColor: '#fefefe',
                         borderRadius: '7px',
-                        padding: '1%'
+                        padding: '1%',
+                        width: '100%',
+                        textAlign: 'center',
                     }}>
                         <tr style={rowStyle}><th>Email</th><th>Permissions</th><th>Unique URL</th><th></th></tr>
                         {userInfo}

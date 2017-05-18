@@ -134,7 +134,6 @@ export class AddUsers extends Component<{}, AddUsersState> {
     }
 
     changeForm(addSingle: boolean) {
-        console.log('running', addSingle);
         this.updateState('addSingle', addSingle);
     }
 
