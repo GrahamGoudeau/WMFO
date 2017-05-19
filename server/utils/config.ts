@@ -19,8 +19,7 @@ export default class Config {
         ],
         stringFields: <string[]>[
             'DEV_DATABASE_URL',
-            'PROD_DATABASE_URL',
-            'DATABASE_NAME',
+            'DATABASE_URL',
         ],
         numberFields: <string[]>[
             'PORT',

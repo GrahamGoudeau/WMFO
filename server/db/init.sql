@@ -1,7 +1,8 @@
-DROP DATABASE IF EXISTS wmfo_db;
-CREATE DATABASE wmfo_db;
-
-\c wmfo_db;
+DROP SCHEMA public CASCADE;
+CREATE SCHEMA public;
+GRANT ALL ON SCHEMA public TO postgres;
+GRANT ALL ON SCHEMA public TO public;
+COMMENT ON SCHEMA public IS 'standard public schema';
 
 /* for UUID generation */
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";

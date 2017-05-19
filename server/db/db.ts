@@ -342,16 +342,12 @@ export default class Database {
         const isProduction: boolean = CONFIG.getBooleanConfig('PRODUCTION');
         if (isProduction) {
             this.log.INFO('Using production db');
-            dbUrl = CONFIG.getStringConfig('PROD_DATABASE_URL');
+            dbUrl = CONFIG.getStringConfig('DATABASE_URL');
         } else {
             this.log.INFO('Using dev db');
             dbUrl = CONFIG.getStringConfig('DEV_DATABASE_URL');
         }
-        const pgpCn: any = {
-            host: dbUrl,
-            database: CONFIG.getStringConfig('DATABASE_NAME')
-        };
-        this.db = pgp(pgpCn);
+        this.db = pgp(`${dbUrl}?${isProduction ? 'ssl=true' : ''}`);
         this.dj = new DJManagement(this.pgp, this.db);
         this.exec = new ExecBoardManagement(this.pgp, this.db);
     }
