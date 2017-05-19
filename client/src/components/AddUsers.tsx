@@ -229,7 +229,7 @@ class AddMultipleUserForm extends FormComponent<{}, AddMultipleUserFormState> {
     render() {
         const sentMessage = this.state.submitError ?
             'An error occurred while submitting. Make sure none of the emails you entered are already users.  If the error keeps occurring, contact the webmaster.' :
-            'Successfully submitted! All new users will soon receive an email with their unique code.  If the email does not send, go to the \'Pending Members\' tab to find their unique code and send it to them manually.';
+            'Successfully submitted! All new users will soon receive an email with their unique URL.  If the email does not send, go to the \'Pending Members\' tab to find their unique URL and send it to them manually.';
         return (
             <form onSubmit={this.handleSubmit.bind(this)}>
                 <p style={{color: '#333', textAlign: 'center' }}>Fill out at least one of the boxes below to add multiple users.</p>
