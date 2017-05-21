@@ -41,7 +41,7 @@ class App extends React.Component<{}, AppState> {
     private logOut(e: any) {
         AuthState.getInstance().deauthorize();
         WMFORequest.getInstance().removeAuthHeader();
-        setTimeout(() => browserHistory.push('/'), 100);
+        browserHistory.push('/');
     }
 
     render() {
