@@ -88,19 +88,21 @@ class App extends React.Component<{}, AppState> {
             </ul>
         );
         const signInMessage = (
-            <div id="signInMessage">
-                {this.state.user.caseOf({
+                this.state.user.caseOf({
                     just: (m: CommunityMemberRecord) => `Signed In: ${m.email}`,
                     nothing: () => ''
-                })}
-            </div>
+                })
         );
         return (
             <div style={{ width: '100%', height: '100%'}}>
                 <Link to="/">
                     <img id="logo" src="/dist/static/img/Logo-1.png" alt="WMFO"/>
                 </Link>
-                {signInMessage}
+                <div id="signInMessage">
+                    {signInMessage}
+                    <br/>
+                    WebMaster: grahamgoudeau@gmail.com
+                </div>
                 {navbar}
                 {this.props.children}
             </div>
