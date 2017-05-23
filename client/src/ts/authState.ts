@@ -33,13 +33,20 @@ export const DJ_PERMISSIONS: PermissionLevel[] = [
     'COMMUNITY_DJ'
 ];
 
+export const EXEC_EMAILS: string[] = [
+    'gm@wmfo.org',
+    'agm@wmfo.org',
+    'pd@wmfo.org',
+    'ops@wmfo.org',
+];
+
 export interface CommunityMemberRecord {
     id: number;
     firstName: string;
     lastName: string;
     email: string;
     active: boolean;
-    tuftsId: number;
+    tuftsId?: number;
     lastAgreementSigned?: number;
     permissionLevels: PermissionLevel[];
 }
