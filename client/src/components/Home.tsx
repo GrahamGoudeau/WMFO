@@ -1,6 +1,7 @@
 import * as React from "react";
 import Maybe from "../ts/maybe";
-import { AuthState, CommunityMemberRecord } from "../ts/authState";
+import { EXEC_BOARD_PERMISSIONS, AuthState, CommunityMemberRecord } from "../ts/authState";
+import { ProfileView } from "./ProfileView";
 import Component from "./Component";
 import { FormComponent, ErrorState } from "./Form";
 import WMFORequest from "../ts/request";
@@ -53,26 +54,31 @@ class LoginPrompt extends FormComponent<{}, LoginPromptState> {
 }
 
 export class Home extends Component<{}, HomeState> {
-    constructor() {
-        super();
+    constructor(props: {}) {
+        super(props);
         this.state = {
             user: AuthState.getInstance().getState(),
             querying: true
         };
         AuthState.getInstance().addListener((m: Maybe<CommunityMemberRecord>) => {
-            setTimeout(() => {
-                this.setState({ user: m, querying: false });
-            }, 50);
+            this.setState({ user: m, querying: false });
         });
-        setTimeout(() => {
-            AuthState.getInstance().updateState().then(m => this.setState({ user: m, querying: false }));
-        }, 50);
+
+        AuthState.getInstance().updateState().then(m => this.setState({ user: m, querying: false }));
+    }
+
+    async componentDidMount() {
+        this.setState({
+            user: await AuthState.getInstance().updateState(),
+            querying: false,
+        });
     }
 
     render() {
         const homePage = this.state.user.caseOf({
             nothing: () => (<LoginPrompt/>),
-            just: (m: CommunityMemberRecord) => (<div>{m.id}</div>)
+            just: (m: CommunityMemberRecord) =>
+                (<ProfileView isExecBoardManaging={false} profileData={m}/>)
         });
         return (
             <div style={{color: 'white'}}>
