@@ -63,7 +63,7 @@ export const COMMON_FIELD_SHAPES: any = {
             (s: string) => s.length > 0,
             (s: string) => s.indexOf('@') !== -1,
             (s: string) => s.indexOf('.') !== -1,
-            (s: string) => !/\S/.test(s),
+            (s: string) => !/\s/.test(s),
         ] },
     dateString: { type: 'string', validation: [(s: string) => dateRegex.test(s)] },
     num: { type: 'number' },

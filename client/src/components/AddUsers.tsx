@@ -157,7 +157,10 @@ class AddMultipleUserForm extends FormComponent<{}, AddMultipleUserFormState> {
             return;
         }
         await this.updateStateAsync('hasSubmitted', true);
-        const getEmails = (textareaValue: string) => textareaValue.split(',').filter(s => s.length > 0 && /\S/.test(s));
+        const getEmails = (textareaValue: string) => textareaValue
+            .split(',')
+            .filter(s => s.length > 0 && /\S/.test(s))
+            .map(s => s.trim());
 
         // check for duplicates
         const studentDJEmails = getEmails(this.state.studentDJs);

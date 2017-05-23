@@ -298,7 +298,6 @@ class ExecBoardManagement {
     async getUnconfirmedAccounts(): Promise<PendingCommunityMember[]> {
         this.log.DEBUG('getting unconfirmed accounts');
         const data = await this.db.any(this.queries.getUnconfirmedAccounts);
-        this.log.DEBUG(data);
         return data.map((record: any) => {
             const member: PendingCommunityMember = {
                 email: record.email,
