@@ -1,5 +1,7 @@
 import * as React from 'react';
 import { newObject } from '../ts/onClickUtils';
+import { AuthState } from '../ts/authState';
+import { browserHistory } from 'react-router';
 
 export default abstract class Component<P, S> extends React.Component<P, S> {
     async setStateAsync(newState: S): Promise<any> {
@@ -20,5 +22,16 @@ export default abstract class Component<P, S> extends React.Component<P, S> {
         const update: any = {};
         update[key] = value;
         await this.setStateAsync(newObject(this.state, update));
+    }
+
+    constructor(props: P) {
+        super(props);
+        const p: { location?: { pathname: string }} = props;
+        AuthState.getInstance().updateState().then(s => {
+            if (s.isNothing() && p.location && p.location.pathname !== '/') {
+                browserHistory.push('/');
+                return;
+            }
+        });
     }
 }
