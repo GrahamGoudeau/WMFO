@@ -73,7 +73,6 @@ export class ManageUsers extends Component<{}, ManageUsersState> {
 
     async componentDidMount() {
         try {
-            console.log('sending request');
             const response = await WMFORequest.getInstance().GET(this.ALL_USER_URL);
             await this.updateStateAsync('users', response.data.allUserInfo);
             await this.updateStateAsync('querying', false);
