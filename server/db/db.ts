@@ -34,6 +34,13 @@ export interface CommunityMemberRecord {
     permissionLevels: PermissionLevel[];
 }
 
+export interface AllUserInfo extends CommunityMemberRecord {
+    dateLastAgreementSigned: Date;
+    confirmedVolunteerHours: number;
+    pendingVolunteerHours: number;
+    numShowsHosted: number;
+}
+
 export interface PendingCommunityMember {
     email: string;
     code?: string;
@@ -240,6 +247,7 @@ class ExecBoardManagement {
         addManyDjs: QueryFile,
         approveHours: QueryFile,
         deleteHours: QueryFile,
+        getAllUserInfo: QueryFile,
     };
     private readonly columnSets: {
         addPendingMembers: pgpLib.ColumnSet,
@@ -255,6 +263,7 @@ class ExecBoardManagement {
             addManyDjs: sql('queries/addManyDjs.sql', this.log),
             approveHours: sql('queries/approveHours.sql', this.log),
             deleteHours: sql('queries/deleteHours.sql', this.log),
+            getAllUserInfo: sql('queries/getAllUserInfo.sql', this.log),
         };
         this.columnSets = {
             addPendingMembers: new this.pgp.helpers.ColumnSet(['email'], {table: 'pending_community_members_t'}),
@@ -284,6 +293,26 @@ class ExecBoardManagement {
             return Either.Left<ResponseMessage, {}>(buildMessage(e, 'add pending members', this.log));
         }
         return Either.Right<ResponseMessage, {}>({});
+    }
+
+    async getAllUserInfo(): Promise<AllUserInfo[]> {
+        const data = await this.db.many(this.queries.getAllUserInfo);
+        return data.map((record: any) => {
+            return {
+                id: record.id,
+                firstName: record.first_name,
+                lastName: record.last_name,
+                email: record.email,
+                active: record.active,
+                tuftsId: record.tufts_id,
+                lastAgreementSigned: record.last_agreement_signed,
+                dateLastAgreementSigned: record.date_last_agreement_signed,
+                permissionLevels: record.permission_levels,
+                confirmedVolunteerHours: record.confirmed_volunteer_hours,
+                pendingVolunteerHours: record.pending_volunteer_hours,
+                numShowsHosted: parseInt(record.num_shows_hosted), // the COUNT operator may return an integer larger than JS can represent in the number type, so pg returns a string
+            };
+        });
     }
 
     async approveHours(hoursId: number): Promise<void> {

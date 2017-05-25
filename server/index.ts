@@ -63,6 +63,11 @@ const addPendingMembersBuilder: SecureRouteBuilder =
                                                EXEC_BOARD_PERMISSIONS)
     .setHttpMethod(HttpMethod.POST);
 
+const manageUsersBuilder: SecureRouteBuilder =
+    <SecureRouteBuilder>new SecureRouteBuilder('/api/exec/manageUsers',
+                                               Exec_api.handleManageUsers,
+                                               EXEC_BOARD_PERMISSIONS)
+
 const getUnconfirmedAccountBuilder: InsecureRouteBuilder =
     <InsecureRouteBuilder>new InsecureRouteBuilder('/api/account/getUnconfirmedAccount', Account_api.handleGetUnconfirmedAccount)
     .setHttpMethod(HttpMethod.POST);
@@ -100,6 +105,7 @@ const secureRoutes: SecureRoute[] = [
     new SecureRoute(getVolunteerHours),
     new SecureRoute(approveHours),
     new SecureRoute(deleteHours),
+    new SecureRoute(manageUsersBuilder),
 ];
 
 routeManager.addInsecureRoutes(insecureRoutes);

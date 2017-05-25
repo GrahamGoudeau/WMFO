@@ -1,7 +1,7 @@
 import * as express from 'express';
 import Logger from '../utils/logger';
 import DB from '../db/db';
-import { PendingCommunityMember, VolunteerHours, CommunityMemberRecord, DBResult } from '../db/db';
+import { AllUserInfo, PendingCommunityMember, VolunteerHours, CommunityMemberRecord, DBResult } from '../db/db';
 import { buildNonObjectArrayShape, KeyShape, RequestShape, validateArray, HTMLEscapedString, COMMON_FIELD_SHAPES, validateKeys } from '../utils/functionalUtils';
 import { AuthToken, PermissionLevel, ResponseMessage, badRequest, jsonResponse, successResponse } from '../utils/requestUtils';
 import { buildAuthToken, hashPassword } from '../utils/security';
@@ -39,6 +39,20 @@ export async function handleGetUnconfirmedHours(req: express.Request,
     }
 }
 
+export async function handleManageUsers(req: express.Request,
+                                        res: express.Response,
+                                        authToken: AuthToken): Promise<void> {
+    try {
+        const data: AllUserInfo[] = await db.exec.getAllUserInfo();
+        log.DEBUG(data);
+        log.INFO('User', authToken.email, 'requesting all user data');
+        jsonResponse(res, { allUserInfo: data });
+    } catch (e) {
+        log.ERROR('failed to get all user data', e);
+        badRequest(res, 'DB_ERROR');
+        return;
+    }
+}
 export async function handleResolveHours(req: express.Request,
                                          res: express.Response,
                                          authToken: AuthToken,
