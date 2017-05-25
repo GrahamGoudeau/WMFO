@@ -105,10 +105,10 @@ $BODY$
 BEGIN
     IF NEW.email = (SELECT email FROM community_members_t WHERE email=NEW.email) THEN
         RAISE EXCEPTION 'Pending member duplicate';
-        END IF;
+    END IF;
 
-        RETURN NEW;
-    END;
+    RETURN NEW;
+END;
 $BODY$
 LANGUAGE 'plpgsql';
 
@@ -143,6 +143,54 @@ CREATE TABLE volunteer_hours_t (
     confirmed BOOLEAN NOT NULL DEFAULT FALSE,
     community_member_id INTEGER REFERENCES community_members_t(id) NOT NULL,
     deleted BOOLEAN NOT NULL DEFAULT FALSE
+);
+
+CREATE VIEW all_user_info_v AS (
+    SELECT
+        cm.id,
+        cm.first_name,
+        cm.last_name,
+        cm.email,
+        cm.active,
+        cm.tufts_id,
+        las.id AS last_agreement_signed,
+        las.date_created AS date_last_agreement_signed,
+        pl.permission_levels,
+        COALESCE(cvh.confirmed_volunteer_hours, 0) AS confirmed_volunteer_hours,
+        COALESCE(pvh.pending_volunteer_hours, 0) AS pending_volunteer_hours,
+        COALESCE(sor.num_shows_hosted, 0) AS num_shows_hosted
+    FROM community_members_t cm
+    LEFT JOIN agreements_t las ON las.id = cm.last_agreement_signed
+    LEFT JOIN (
+        SELECT
+            community_member_id,
+            COUNT(id) as num_shows_hosted
+        FROM show_owner_relation_t
+        GROUP BY community_member_id
+    ) sor ON sor.community_member_id = cm.id
+    LEFT JOIN (
+        SELECT
+            community_member_id,
+            SUM(num_hours) as confirmed_volunteer_hours
+        FROM volunteer_hours_t
+        WHERE confirmed = TRUE
+        GROUP BY community_member_id
+    ) cvh ON cvh.community_member_id = cm.id
+    LEFT JOIN (
+        SELECT
+            community_member_id,
+            SUM(num_hours) as pending_volunteer_hours
+        FROM volunteer_hours_t
+        WHERE confirmed = FALSE
+        GROUP BY community_member_id
+    ) pvh on pvh.community_member_id = cm.id
+    LEFT JOIN (
+        SELECT
+            community_member_id,
+            ARRAY_TO_JSON(ARRAY_AGG(permission_level)) as permission_levels
+        FROM permission_level_t
+        GROUP BY community_member_id
+    ) pl on pl.community_member_id = cm.id
 );
 
 CREATE TABLE show_check_in_t (
