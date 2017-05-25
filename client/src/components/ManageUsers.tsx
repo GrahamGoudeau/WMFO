@@ -4,6 +4,7 @@ import { EXEC_EMAILS, PermissionLevel, AuthState, CommunityMemberRecord } from "
 import Component from "./Component";
 import WMFORequest from "../ts/request";
 import { browserHistory } from "react-router";
+import { ProfileView } from "./ProfileView";
 import * as ReactModal from "react-modal";
 
 interface AllUserInfo extends CommunityMemberRecord {
@@ -39,8 +40,14 @@ export class ManageUsers extends Component<{}, ManageUsersState> {
     private async displayInfo(user: AllUserInfo) {
         //await this.updateStateAsync('modalContents', <div>{user.id}</div>);
         const modalContents = (
-            <div>
-                {user.id}
+            <div style={{ padding: '2%' }}>
+                <p>Email: {user.email}</p>
+                <p>User ID: {user.id}</p>
+                <p>User Name: {user.firstName} {user.lastName}</p>
+                <p>Shows hosted: {user.numShowsHosted}</p>
+                <p>Confirmed Volunteer Hours: {user.confirmedVolunteerHours}</p>
+                {user.pendingVolunteerHours > 0 ? <p>Pending Volunteer Hours: {user.pendingVolunteerHours}</p> : null}
+                <p>Permissions: {user.permissionLevels} (<a href="javascript:void(0);">Edit</a>)</p>
             </div>
         );
         await this.setStateAsync({
@@ -49,7 +56,8 @@ export class ManageUsers extends Component<{}, ManageUsersState> {
             emailFilter: this.state.emailFilter,
             nameFilter: this.state.nameFilter,
             modalOpen: true,
-            modalContents: modalContents
+            //modalContents: modalContents
+            modalContents: <ProfileView isExecBoardManaging={true} profileData={user}/>
         });
     }
 
@@ -91,9 +99,9 @@ export class ManageUsers extends Component<{}, ManageUsersState> {
             borderBottomWidth: '1px',
         };
 
-        if (this.state.querying) return null;
+        //if (this.state.querying) return null;
 
-        const userList = this.state.users
+        const userList = this.state.querying ? null : this.state.users
             .filter((user: AllUserInfo) => EXEC_EMAILS.indexOf(user.email) === -1)
             .filter((user: AllUserInfo) =>
                 this.state.emailFilter.length === 0 ||
@@ -107,11 +115,7 @@ export class ManageUsers extends Component<{}, ManageUsersState> {
                     <p>Name: {user.firstName} {user.lastName}</p>
                     <p>Confirmed Volunteer Hours: {user.confirmedVolunteerHours}</p>
                     <p>Shows Hosted: {user.numShowsHosted}</p>
-                    <p>
-                        <a style={{paddingLeft: '1%'}} href="javascript:void(0)" onClick={_ => this.displayInfo.bind(this)(user)}>Manage details</a>
-                        /
-                        <a href="javascript:void(0)">Disable</a>
-                    </p>
+                    <a href="javascript:void(0)" onClick={_ => this.displayInfo.bind(this)(user)}>Manage user</a>
                 </div>
             ));
         return (
@@ -122,14 +126,25 @@ export class ManageUsers extends Component<{}, ManageUsersState> {
                     <br/>
                     Filter by name: <input type="text" onChange={this.handleNameFilterChange.bind(this)} value={this.state.nameFilter}/>
                     <br/>
+                    <button onClick={async _ => {
+                        await this.updateStateAsync('emailFilter', '');
+                        await this.updateStateAsync('nameFilter', '');
+                    }}>Clear Filters</button>
                     <hr/>
                 </div>
                 <div style={Object.assign({}, mainBoxStyle, { width: '30%', display: 'inline-block', height: '100%', overflow: 'scroll', verticalAlign: 'top' })}>
-                    {userList.length > 0 ? userList : 'No matches'}
+                    {userList == null ? 'Loading...' :
+                        userList.length > 0 ? userList : 'No matches'}
                 </div>
                 <ReactModal isOpen={this.state.modalOpen} contentLabel="DJ Details">
-                    <button onClick={_ => this.updateState('modalOpen', false)}>Close</button>
-                    {this.state.modalContents}
+                    <button onClick={_ => this.updateState('modalOpen', false)} style={{padding: '0.5%'}}>Close</button>
+                    <div style={{
+                        marginTop: '2%',
+                        border: 'solid',
+                        borderWidth: '1px',
+                    }}>
+                        {this.state.modalContents}
+                    </div>
                 </ReactModal>
             </div>
         );
