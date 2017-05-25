@@ -1,7 +1,7 @@
 import * as React from "react";
 import { Link, browserHistory } from "react-router";
 import Maybe from "../ts/maybe";
-import { EXEC_EMAILS, EXEC_BOARD_PERMISSIONS, PermissionLevel, AuthState, CommunityMemberRecord } from "../ts/authState";
+import { PERMISSION_LEVEL_STRINGS, EXEC_EMAILS, EXEC_BOARD_PERMISSIONS, PermissionLevel, AuthState, CommunityMemberRecord } from "../ts/authState";
 import Component from "./Component";
 import { FormComponent, ErrorState } from "./Form";
 import WMFORequest from "../ts/request";
@@ -14,11 +14,98 @@ interface ProfileViewState {
     editFirstName: string;
     lastName: string;
     editLastName: string;
+    editingPermissions: boolean;
 }
 
 interface ProfileViewProps {
     isExecBoardManaging: boolean; // allows editing of permissions
     profileData: CommunityMemberRecord;
+}
+
+interface PermissionsEditState {
+    editingPermissions: boolean;
+    editedPermissionLevels: PermissionLevel[];
+};
+
+interface PermissionsEditProps {
+    permissionLevels: PermissionLevel[];
+    communityMemberId: number;
+}
+
+class PermissionsEdit extends Component<PermissionsEditProps, PermissionsEditState> {
+    private readonly CHANGE_PERMISSIONS_URL: string = '/api/exec/changePermissions';
+    constructor(props: PermissionsEditProps) {
+        super(props);
+        this.state = {
+            editingPermissions: false,
+            editedPermissionLevels: this.props.permissionLevels.slice(),
+        };
+    }
+
+    private async handleChange(event: any) {
+        const level: PermissionLevel = event.target.value;
+        const index: number = this.state.editedPermissionLevels.indexOf(level);
+        const copy: PermissionLevel[] = this.state.editedPermissionLevels.slice();
+        if (index !== -1) {
+            copy.splice(index, 1);
+            await this.updateStateAsync('editedPermissionLevels', copy);
+        } else {
+            copy.push(level);
+            await this.updateStateAsync('editedPermissionLevels', copy);
+        }
+    }
+
+    private async savePermissions(e: any) {
+        e.preventDefault();
+        try {
+            const response = await WMFORequest.getInstance().POST(this.CHANGE_PERMISSIONS_URL, {
+                updatedPermissions: [{
+                    communityMemberId: this.props.communityMemberId,
+                    permissionLevels: this.state.editedPermissionLevels
+                }]
+            });
+            console.log('res', response);
+        } catch (e) {
+            console.log('err', e);
+            alert('Something went wrong! If this keeps happening, contact the WebMaster for help.');
+        }
+    }
+
+    private async toggleEditing(e: any) {
+        e.preventDefault();
+        await this.updateStateAsync('editedPermissionLevels', this.props.permissionLevels.slice());
+        await this.updateStateAsync('editingPermissions', !this.state.editingPermissions);
+    }
+
+    render() {
+        if (this.state.editingPermissions) {
+            return (
+                <div style={{ border: 'solid', borderWidth: '0.5px' }}>
+                    <h2>Edit Permissions</h2>
+                    <div>
+                        {PERMISSION_LEVEL_STRINGS.map((p: PermissionLevel) => {
+                            return (
+                                <label>
+                                    <input style={{ marginRight: '3%' }}type="checkbox" value={p} checked={this.state.editedPermissionLevels.indexOf(p) !== -1} onClick={e => this.handleChange(e)}/>
+                                    {p}
+                                    <br/>
+                                </label>
+                            );
+                        })}
+                    </div>
+                    <a href="javascript:void(0);" onClick={this.savePermissions.bind(this)}>Save</a>
+                    /
+                    <a href="javascript:void(0);" onClick={this.toggleEditing.bind(this)}>Cancel</a>
+                </div>
+            );
+        } else {
+            return (
+                <div>
+                    <a href="javascript:void(0);" onClick={this.toggleEditing.bind(this)}>(Edit)</a>
+                </div>
+            );
+        }
+    }
 }
 
 export class ProfileView extends FormComponent<ProfileViewProps, ProfileViewState> {
@@ -33,6 +120,7 @@ export class ProfileView extends FormComponent<ProfileViewProps, ProfileViewStat
             editFirstName: this.props.profileData.firstName,
             lastName: this.props.profileData.lastName,
             editLastName: this.props.profileData.lastName,
+            editingPermissions: false,
         };
     }
 
@@ -86,7 +174,28 @@ export class ProfileView extends FormComponent<ProfileViewProps, ProfileViewStat
 
         // only allow edit controls if not being managed by some other exec board member
         // and if the user is not an exec board member themselves
+        // temporarily disabled
         const shouldShowControl = !this.props.isExecBoardManaging && EXEC_EMAILS.indexOf(this.props.profileData.email) === -1;
+
+        const permissionsEdit = this.props.isExecBoardManaging ?
+            <PermissionsEdit permissionLevels={this.props.profileData.permissionLevels} communityMemberId={this.props.profileData.id}/>
+            :
+            null
+
+        // check if we should be displaying all the user info
+        const allUserInfo: {
+            numShowsHosted?: number;
+            confirmedVolunteerHours?: number;
+            pendingVolunteerHours?: number
+        } = (this.props.profileData as any);
+
+        const allUserDisplay = allUserInfo.numShowsHosted != null && allUserInfo.confirmedVolunteerHours != null && allUserInfo.pendingVolunteerHours != null ? (
+            <div>
+                <p>Shows hosted: {allUserInfo.numShowsHosted}</p>
+                <p>Confirmed Volunteer Hours: {allUserInfo.confirmedVolunteerHours}</p>
+                {allUserInfo.pendingVolunteerHours > 0 ? (<p>Pending Volunteer Hours: {allUserInfo.pendingVolunteerHours}</p>) : null}
+            </div>
+        ) : null;
 
         return (
             <div style={profileStyle}>
@@ -97,7 +206,8 @@ export class ProfileView extends FormComponent<ProfileViewProps, ProfileViewStat
                 <p>User ID: {this.props.profileData.id}</p>
                 <p>Permissions: {this.props.profileData.permissionLevels.reduce((acc: string, level: PermissionLevel) => {
                     return acc.length > 0 ? `${acc}, ${level}` : level
-                }, '')}</p>
+                }, '')} {permissionsEdit}</p>
+                {allUserDisplay}
 
                 {shouldShowControl && false ? control : null}
             </div>
