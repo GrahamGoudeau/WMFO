@@ -32,6 +32,6 @@ export default abstract class Component<P, S> extends React.Component<P, S> {
                 browserHistory.push('/');
                 return;
             }
-        });
+        }).catch(e => browserHistory.push('/'));
     }
 }

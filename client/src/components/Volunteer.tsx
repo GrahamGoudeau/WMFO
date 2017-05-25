@@ -282,7 +282,6 @@ export class ExecVolunteerReview extends Component<{}, ExecVolunteerReviewState>
         try {
             const response = await WMFORequest.getInstance().GET(this.GET_HOURS_EXEC_URL);
             await this.updateStateAsync('unconfirmedHours', response.data);
-            console.log('res', response);
         } catch (e) {
             console.log('error:', e);
         }

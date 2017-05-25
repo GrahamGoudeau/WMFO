@@ -70,7 +70,6 @@ class AddSingleUserForm extends FormComponent<{}, AddSingleUserFormState> {
                     permissionLevels: this.buildPermissionArray()
                 }]
             });
-            console.log('response:', response);
             await this.updateStateAsync('error', false);
             await this.updateStateAsync('message', `Successfully added user ${this.state.djEmail}! They should receive an email soon.  If not, send them their unique URL from the Pending Members tab.`);
             this.setState({
