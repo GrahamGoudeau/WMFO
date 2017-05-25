@@ -338,9 +338,7 @@ class ExecBoardManagement {
     }
 
     async getUnconfirmedHours(): Promise<VolunteerHours[]> {
-        const data = await this.db.any(this.queries.getUnconfirmedHours);
-        return data.map((record: any) => {
-            const hours: VolunteerHours = {
+        return await this.db.map(this.queries.getUnconfirmedHours, [], (record: any) => ({
                 id: record.id,
                 created: record.created,
                 volunteerDate: record.volunteer_date,
@@ -348,9 +346,7 @@ class ExecBoardManagement {
                 description: record.description,
                 confirmed: record.confirmed,
                 email: record.email
-            };
-            return hours;
-        });
+            }));
     }
 }
 
