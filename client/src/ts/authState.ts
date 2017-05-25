@@ -15,6 +15,8 @@ const permissionLevelStrings = {
 
 export type PermissionLevel = keyof typeof permissionLevelStrings;
 
+export const PERMISSION_LEVEL_STRINGS: PermissionLevel[] = Object.keys(permissionLevelStrings) as PermissionLevel[];
+
 export function isPermissionLevel(s: string): s is PermissionLevel {
     return permissionLevelStrings.hasOwnProperty(s);
 }
@@ -38,6 +40,7 @@ export const EXEC_EMAILS: string[] = [
     'agm@wmfo.org',
     'pd@wmfo.org',
     'ops@wmfo.org',
+    'grahamgoudeau@gmail.com',
 ];
 
 export interface CommunityMemberRecord {
