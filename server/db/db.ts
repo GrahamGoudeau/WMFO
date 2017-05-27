@@ -215,23 +215,21 @@ class DJManagement {
                    passwordHash: string,
                    tuftsId?: number): DBAsyncResult<number> {
         try {
-            const idResult: number = (await this.db.one(this.queries.register,
-                     [firstName.value,
-                      lastName.value,
-                      email.value,
-                      passwordHash,
-                      tuftsId ? tuftsId : null])).id;
 
-            const insertInfo = (await this.db.any(this.queries.getPendingPermissionsByEmail, [email.value])).map((record: any) => {
-                return {
-                    community_member_id: idResult,
-                    permission_level: record.permission_level
-                };
+            await this.db.tx(t => {
+                return t.one(this.queries.register, [firstName.value, lastName.value, email.value, passwordHash, tuftsId || null], a => +a.id)
+                    .then(idResult => {
+                        return t.map(this.queries.getPendingPermissionsByEmail, [email.value], (record: any) => ({
+                                community_member_id: idResult,
+                                permission_level: record.permission_level
+                        }));
+                    })
+                    .then(insertInfo => {
+                        return t.none(this.pgp.helpers.insert(insertInfo, this.columnSets.addManyPermissions));            
+                    });
             });
-
-            await this.db.none(this.pgp.helpers.insert(insertInfo, this.columnSets.addManyPermissions));
-
-            return Either.Right<ResponseMessage, number>(idResult);
+            
+            return Either.Right<ResponseMessage, number>(/*idResult*/);
         } catch (e) {
             return Either.Left<ResponseMessage, number>(buildMessage(e, 'registration', this.log));
         }
