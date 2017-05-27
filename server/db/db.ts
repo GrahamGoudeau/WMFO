@@ -215,21 +215,22 @@ class DJManagement {
                    passwordHash: string,
                    tuftsId?: number): DBAsyncResult<number> {
         try {
-
+            var idResult;
             await this.db.tx(t => {
                 return t.one(this.queries.register, [firstName.value, lastName.value, email.value, passwordHash, tuftsId || null], a => +a.id)
-                    .then(idResult => {
+                    .then(id => {
+                        idResult = id;
                         return t.map(this.queries.getPendingPermissionsByEmail, [email.value], (record: any) => ({
-                                community_member_id: idResult,
-                                permission_level: record.permission_level
+                            community_member_id: idResult,
+                            permission_level: record.permission_level
                         }));
                     })
                     .then(insertInfo => {
-                        return t.none(this.pgp.helpers.insert(insertInfo, this.columnSets.addManyPermissions));            
+                        return t.none(this.pgp.helpers.insert(insertInfo, this.columnSets.addManyPermissions));
                     });
             });
-            
-            return Either.Right<ResponseMessage, number>(/*idResult*/);
+
+            return Either.Right<ResponseMessage, number>(idResult);
         } catch (e) {
             return Either.Left<ResponseMessage, number>(buildMessage(e, 'registration', this.log));
         }
