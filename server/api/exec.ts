@@ -24,6 +24,49 @@ export async function handleGetUnconfirmedAccounts(req: express.Request,
     }
 }
 
+export async function handleChangePermissions(req: express.Request,
+                                              res: express.Response,
+                                              authToken: AuthToken): Promise<void> {
+    if (!req.body) {
+        badRequest(res);
+        return;
+    }
+
+    // must parse community member IDs from strings
+    try {
+        req.body.communityMemberId = parseInt(req.body.communityMemberId);
+    } catch (e) {
+        // communityMemberId field did not exist
+        badRequest(res);
+        return;
+
+    }
+
+    const permissionArrayShape: KeyShape = buildNonObjectArrayShape(COMMON_FIELD_SHAPES.permission);
+    permissionArrayShape.validation.push((arr: any[]) => {
+        return arr.length > 0
+    });
+
+    const updatedPermissions: { communityMemberId: number; permissionLevels: PermissionLevel[] } = req.body;
+
+    if (!validateKeys(updatedPermissions, {
+            communityMemberId: COMMON_FIELD_SHAPES.nonnegativeNum,
+            permissionLevels: permissionArrayShape })) {
+        console.log('failed validation', updatedPermissions);
+        badRequest(res);
+        return;
+    }
+
+    try {
+        await db.exec.changePermissions(updatedPermissions);
+    } catch (e) {
+        log.ERROR('failed to change permissions for user id', updatedPermissions.communityMemberId);
+        badRequest(res, 'DB_ERROR');
+        return;
+    }
+    log.INFO(authToken.email, 'changed permissions for user', updatedPermissions.communityMemberId);
+    successResponse(res);
+}
 export async function handleGetUnconfirmedHours(req: express.Request,
                                                 res: express.Response,
                                                 authToken: AuthToken): Promise<void> {
@@ -44,7 +87,7 @@ export async function handleManageUsers(req: express.Request,
                                         authToken: AuthToken): Promise<void> {
     try {
         const data: AllUserInfo[] = await db.exec.getAllUserInfo();
-        log.DEBUG(data);
+
         log.INFO('User', authToken.email, 'requesting all user data');
         jsonResponse(res, { allUserInfo: data });
     } catch (e) {
