@@ -78,7 +78,7 @@ export class Home extends Component<{}, HomeState> {
         const homePage = this.state.user.caseOf({
             nothing: () => (<LoginPrompt/>),
             just: (m: CommunityMemberRecord) =>
-                (<ProfileView isExecBoardManaging={false} profileData={m}/>)
+                (<ProfileView onUpdate={_ => null} isExecBoardManaging={false} profileData={m}/>)
         });
         return (
             <div style={{color: 'white'}}>
