@@ -47,6 +47,11 @@ export interface PendingCommunityMember {
     permissionLevels: PermissionLevel[];
 }
 
+export interface UpdatedPermissions {
+    communityMemberId: number;
+    permissionLevels: PermissionLevel[];
+}
+
 export interface VolunteerHours {
     id: number;
     created: Date;
@@ -215,17 +220,17 @@ class DJManagement {
                    passwordHash: string,
                    tuftsId?: number): DBAsyncResult<number> {
         try {
-            var idResult;
+            let idResult: number;
             await this.db.tx(t => {
-                return t.one(this.queries.register, [firstName.value, lastName.value, email.value, passwordHash, tuftsId || null], a => +a.id)
-                    .then(id => {
+                return t.one(this.queries.register, [firstName.value, lastName.value, email.value, passwordHash, tuftsId || null], (a: { id: number }) => +a.id)
+                    .then((id: number) => {
                         idResult = id;
                         return t.map(this.queries.getPendingPermissionsByEmail, [email.value], (record: any) => ({
                             community_member_id: idResult,
                             permission_level: record.permission_level
                         }));
                     })
-                    .then(insertInfo => {
+                    .then((insertInfo: { community_member_id: number; permission_level: PermissionLevel }) => {
                         return t.none(this.pgp.helpers.insert(insertInfo, this.columnSets.addManyPermissions));
                     });
             });
@@ -246,10 +251,12 @@ class ExecBoardManagement {
         approveHours: QueryFile,
         deleteHours: QueryFile,
         getAllUserInfo: QueryFile,
+        deleteAllPermissions: QueryFile,
     };
     private readonly columnSets: {
         addPendingMembers: pgpLib.ColumnSet,
         addPendingPermissions: pgpLib.ColumnSet,
+        changePermissions: pgpLib.ColumnSet,
     };
 
     constructor(private readonly pgp: pgpLib.IMain, private readonly db: pgpLib.IDatabase<any>) {
@@ -261,11 +268,34 @@ class ExecBoardManagement {
             approveHours: sql('queries/approveHours.sql', this.log),
             deleteHours: sql('queries/deleteHours.sql', this.log),
             getAllUserInfo: sql('queries/getAllUserInfo.sql', this.log),
+            deleteAllPermissions: sql('queries/deleteAllPermissions.sql', this.log),
         };
         this.columnSets = {
             addPendingMembers: new this.pgp.helpers.ColumnSet(['email'], {table: 'pending_community_members_t'}),
             addPendingPermissions: new this.pgp.helpers.ColumnSet(['pending_community_members_email', 'permission_level'], {table: 'pending_members_permissions_t'}),
+            changePermissions: new this.pgp.helpers.ColumnSet(['community_member_id', 'permission_level'], {table: 'permission_level_t'}),
         }
+    }
+
+    async changePermissions(updatedPermissions: UpdatedPermissions): Promise<void> {
+        const insertValues: { community_member_id: number; permission_level: PermissionLevel }[] = [];
+
+        updatedPermissions.permissionLevels.forEach((newLevel: PermissionLevel) => {
+            insertValues.push({
+                community_member_id: updatedPermissions.communityMemberId,
+                permission_level: newLevel
+            });
+        });
+
+        const data = await this.db.tx(t => {
+            return t.any(this.queries.deleteAllPermissions, [updatedPermissions.communityMemberId])
+                .then((deleteData: any[]) => {
+                    if (deleteData.length > 0) {
+                        return Promise.reject(new Error('Delete permissions failed'));
+                    }
+                    return t.none(this.pgp.helpers.insert(insertValues, this.columnSets.changePermissions));
+                });
+        });
     }
 
     async addPendingMembers(pendingMembers: PendingCommunityMember[]): DBAsyncResult<{}> {

@@ -50,6 +50,7 @@ export class ManageUsers extends Component<{}, ManageUsersState> {
                 <p>Permissions: {user.permissionLevels} (<a href="javascript:void(0);">Edit</a>)</p>
             </div>
         );
+
         await this.setStateAsync({
             querying: false,
             users: this.state.users,
@@ -57,7 +58,16 @@ export class ManageUsers extends Component<{}, ManageUsersState> {
             nameFilter: this.state.nameFilter,
             modalOpen: true,
             //modalContents: modalContents
-            modalContents: <ProfileView isExecBoardManaging={true} profileData={user}/>
+            modalContents: <ProfileView onUpdate={((newUser: CommunityMemberRecord) => {
+                user.permissionLevels = newUser.permissionLevels;
+                if (AuthState.getInstance().getState().valueOr(null).email === newUser.email) {
+                    alert('You have edited your own profile. You must now log in again for security purposes.');
+                    AuthState.getInstance().deauthorize();
+                    browserHistory.push('/');
+                } else {
+                    this.setState(this.state); // force re-render just in case
+                }
+            }).bind(this)} isExecBoardManaging={true} profileData={user}/>
         });
     }
 

@@ -14,12 +14,13 @@ interface ProfileViewState {
     editFirstName: string;
     lastName: string;
     editLastName: string;
-    editingPermissions: boolean;
+    permissionLevels: PermissionLevel[];
 }
 
 interface ProfileViewProps {
     isExecBoardManaging: boolean; // allows editing of permissions
     profileData: CommunityMemberRecord;
+    onUpdate: (newUser: CommunityMemberRecord) => void;
 }
 
 interface PermissionsEditState {
@@ -30,6 +31,7 @@ interface PermissionsEditState {
 interface PermissionsEditProps {
     permissionLevels: PermissionLevel[];
     communityMemberId: number;
+    onSave: (newPermissionLevels: PermissionLevel[]) => void;
 }
 
 class PermissionsEdit extends Component<PermissionsEditProps, PermissionsEditState> {
@@ -59,16 +61,16 @@ class PermissionsEdit extends Component<PermissionsEditProps, PermissionsEditSta
         e.preventDefault();
         try {
             const response = await WMFORequest.getInstance().POST(this.CHANGE_PERMISSIONS_URL, {
-                updatedPermissions: [{
-                    communityMemberId: this.props.communityMemberId,
-                    permissionLevels: this.state.editedPermissionLevels
-                }]
+                communityMemberId: parseInt(this.props.communityMemberId as any),
+                permissionLevels: this.state.editedPermissionLevels
             });
-            console.log('res', response);
         } catch (e) {
             console.log('err', e);
             alert('Something went wrong! If this keeps happening, contact the WebMaster for help.');
+            return;
         }
+        this.props.onSave(this.state.editedPermissionLevels);
+        await this.updateStateAsync('editingPermissions', false);
     }
 
     private async toggleEditing(e: any) {
@@ -120,7 +122,7 @@ export class ProfileView extends FormComponent<ProfileViewProps, ProfileViewStat
             editFirstName: this.props.profileData.firstName,
             lastName: this.props.profileData.lastName,
             editLastName: this.props.profileData.lastName,
-            editingPermissions: false,
+            permissionLevels: this.props.profileData.permissionLevels,
         };
     }
 
@@ -178,7 +180,14 @@ export class ProfileView extends FormComponent<ProfileViewProps, ProfileViewStat
         const shouldShowControl = !this.props.isExecBoardManaging && EXEC_EMAILS.indexOf(this.props.profileData.email) === -1;
 
         const permissionsEdit = this.props.isExecBoardManaging ?
-            <PermissionsEdit permissionLevels={this.props.profileData.permissionLevels} communityMemberId={this.props.profileData.id}/>
+            <PermissionsEdit
+                permissionLevels={this.state.permissionLevels}
+                communityMemberId={this.props.profileData.id}
+                onSave={(async (newPermissionLevels: PermissionLevel[]) => {
+                    await this.updateStateAsync('permissionLevels', newPermissionLevels);
+                    this.props.onUpdate(Object.assign({}, this.props.profileData, { permissionLevels: newPermissionLevels }));
+                }).bind(this)}
+            />
             :
             null
 
@@ -204,7 +213,7 @@ export class ProfileView extends FormComponent<ProfileViewProps, ProfileViewStat
                 <p>Last Name: {edit ? <input id="editLastName" type="text" value={this.state.editLastName} onChange={this.handleChange.bind(this)}/> : this.props.profileData.lastName}</p>
                 <p>Tufts ID: {tuftsId == null ? 'Not tracked yet' : tuftsId}</p>
                 <p>User ID: {this.props.profileData.id}</p>
-                <p>Permissions: {this.props.profileData.permissionLevels.reduce((acc: string, level: PermissionLevel) => {
+                <p>Permissions: {this.state.permissionLevels.reduce((acc: string, level: PermissionLevel) => {
                     return acc.length > 0 ? `${acc}, ${level}` : level
                 }, '')} {permissionsEdit}</p>
                 {allUserDisplay}

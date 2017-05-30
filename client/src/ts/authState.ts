@@ -97,6 +97,7 @@ export class AuthState {
 
     async deauthorize() {
         this.user = Maybe.nothing<CommunityMemberRecord>();
+        WMFORequest.getInstance().setAuthHeader('');
         await this.broadcast();
     }
 
