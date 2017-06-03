@@ -1,5 +1,6 @@
 import * as fs from 'fs';
 import { isPermissionLevel, PermissionLevel } from './requestUtils';
+import { hashPassword } from './security';
 
 export type JSType =
     'number' |
@@ -105,6 +106,15 @@ export function validateArray<T>(arr: any, shape: RequestShape): arr is T[] {
 export function validateArrayNonobject<T>(arr: any, shape: KeyShape): arr is T[] {
     return Array.isArray(arr) && arr.every((x: T) =>
         typeof x === shape.type && (shape.validation ? shape.validation.every(f => f(x)) : true));
+}
+
+export class HashedPassword {
+    private readonly _value: string;
+    constructor(email: string, unhashedPassword: string) {
+        this._value = hashPassword(email.toLowerCase(), unhashedPassword);
+    }
+
+    get value() { return this._value; }
 }
 
 export class HTMLEscapedString {
