@@ -5,7 +5,7 @@ import Logger from '../utils/logger';
 import Maybe from '../utils/maybe';
 import Either from '../utils/either';
 import * as path from 'path';
-import { HTMLEscapedString } from '../utils/functionalUtils';
+import { HashedPassword, HTMLEscapedString } from '../utils/functionalUtils';
 import { PermissionLevel, ResponseMessage } from '../utils/requestUtils';
 
 const CONFIG: Config = Config.getInstance();
@@ -133,8 +133,8 @@ class DJManagement extends ActionManagement {
 
     }
 
-    async changePassword(communityMemberId: number, newPasswordHash: string): Promise<void> {
-        await this.db.none(this.queries.changePassword, [newPasswordHash, communityMemberId]);
+    async changePassword(communityMemberId: number, newPasswordHash: HashedPassword): Promise<void> {
+        await this.db.none(this.queries.changePassword, [newPasswordHash.value, communityMemberId]);
     }
 
     async claimPendingAccount(email: HTMLEscapedString): Promise<void> {
@@ -216,9 +216,9 @@ class DJManagement extends ActionManagement {
     }
 
     async findByEmailAndPassword(email: HTMLEscapedString,
-                                 passwordHash: string): DBAsyncResult<CommunityMemberRecord> {
+                                 passwordHash: HashedPassword): DBAsyncResult<CommunityMemberRecord> {
         try {
-            const data = await this.db.many(this.queries.findByEmailAndPassword, [email.value, passwordHash]);
+            const data = await this.db.many(this.queries.findByEmailAndPassword, [email.value, passwordHash.value]);
 
             return Either.Right<ResponseMessage, CommunityMemberRecord>(this.buildCommunityMember(data));
         } catch (e) {
@@ -237,12 +237,12 @@ class DJManagement extends ActionManagement {
     async register(firstName: HTMLEscapedString,
                    lastName: HTMLEscapedString,
                    email: HTMLEscapedString,
-                   passwordHash: string,
+                   passwordHash: HashedPassword,
                    tuftsId?: number): DBAsyncResult<number> {
         try {
             let idResult: number;
             await this.db.tx(t => {
-                return t.one(this.queries.register, [firstName.value, lastName.value, email.value, passwordHash, tuftsId || null], (a: { id: number }) => +a.id)
+                return t.one(this.queries.register, [firstName.value, lastName.value, email.value, passwordHash.value, tuftsId || null], (a: { id: number }) => +a.id)
                     .then((id: number) => {
                         idResult = id;
                         return t.map(this.queries.getPendingPermissionsByEmail, [email.value], (record: any) => ({

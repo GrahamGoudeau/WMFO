@@ -2,7 +2,7 @@ import * as express from 'express';
 import Logger from '../utils/logger';
 import DB from '../db/db';
 import { PendingCommunityMember, CommunityMemberRecord, DBResult } from '../db/db';
-import { validateArrayNonobject, HTMLEscapedString, COMMON_FIELD_SHAPES, validateKeys } from '../utils/functionalUtils';
+import { validateArrayNonobject, HashedPassword, HTMLEscapedString, COMMON_FIELD_SHAPES, validateKeys } from '../utils/functionalUtils';
 import { AuthToken, PermissionLevel, ResponseMessage, badRequest, jsonResponse, successResponse } from '../utils/requestUtils';
 import { buildAuthToken, hashPassword } from '../utils/security';
 import Either from '../utils/either';
@@ -55,7 +55,7 @@ export async function handleLogin(req: express.Request,
     }
     try {
         const result: DBResult<CommunityMemberRecord> = await db.dj.findByEmailAndPassword(new HTMLEscapedString(body.email.toLowerCase()),
-                                                                                       hashPassword(body.email.toLowerCase(), body.password));
+                                                                                           new HashedPassword(body.email.toLowerCase(), body.password));
         result.caseOf({
             left: e => badRequest(res, e),
             right: c => {
@@ -103,7 +103,7 @@ export async function handleRegister(req: express.Request,
                 new HTMLEscapedString(body.firstName),
                 new HTMLEscapedString(body.lastName),
                 escapedEmail,
-                hashPassword(email, body.password));
+                new HashedPassword(email, body.password));
             await db.dj.claimPendingAccount(escapedEmail);
             return result;
         } catch (e) {
