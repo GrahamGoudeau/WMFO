@@ -10,7 +10,7 @@ import { PermissionLevel, ResponseMessage } from '../utils/requestUtils';
 
 const CONFIG: Config = Config.getInstance();
 
-function sql(file: string, log: Logger): QueryFile {
+function buildQueryFile(file: string, log: Logger): QueryFile {
         const fullPath: string = path.join(__dirname, file);
 
         const options: TQueryFileOptions = {
@@ -21,6 +21,20 @@ function sql(file: string, log: Logger): QueryFile {
             log.ERROR(qf.error);
         }
         return qf;
+}
+
+abstract class ActionManagement {
+    protected abstract queries: { [queryName: string]: QueryFile };
+    protected abstract columnSets: { [columnSetName: string]: pgpLib.ColumnSet };
+    protected log: Logger;
+    protected pgp: pgpLib.IMain;
+    protected db: pgpLib.IDatabase<any>;
+    protected buildSql(filePath: string): QueryFile {
+        return buildQueryFile(filePath, this.log);
+    }
+    protected buildColumnSet(fields: string[], tableName: string): pgpLib.ColumnSet {
+        return new this.pgp.helpers.ColumnSet(fields, { table: tableName });
+    }
 }
 
 export interface CommunityMemberRecord {
@@ -77,8 +91,8 @@ function buildMessage(e: any, process: string, log: Logger): ResponseMessage {
     }
 }
 
-class DJManagement {
-    private readonly queries: {
+class DJManagement extends ActionManagement {
+    protected readonly queries: {
         register: QueryFile,
         findByEmailAndPassword: QueryFile,
         getPermissionLevels: QueryFile,
@@ -90,29 +104,31 @@ class DJManagement {
         claimPendingAccount: QueryFile,
         logVolunteerHours: QueryFile,
         getVolunteerHours: QueryFile,
+        changePassword: QueryFile,
     };
-    private readonly columnSets: {
+    protected readonly columnSets: {
         addManyPermissions: pgpLib.ColumnSet,
     };
 
-    private readonly log: Logger;
-    constructor(private readonly pgp: pgpLib.IMain, private readonly db: pgpLib.IDatabase<any>) {
+    constructor(protected readonly pgp: pgpLib.IMain, protected readonly db: pgpLib.IDatabase<any>) {
+        super();
         this.log = new Logger('dj-management');
         this.queries = {
-            register: sql('queries/registerDj.sql', this.log),
-            findByEmailAndPassword: sql('queries/findByEmailAndPassword.sql', this.log),
-            getPermissionLevels: sql('queries/getPermissionLevels.sql', this.log),
-            hasSignedMostRecentAgreement: sql('queries/hasSignedMostRecentAgreement.sql', this.log),
-            findById: sql('queries/findById.sql', this.log),
-            getSingleUnconfirmedAccount: sql('queries/getSingleUnconfirmedAccount.sql', this.log),
-            getPendingPermissionsByEmail: sql('queries/getPendingPermissionsByEmail.sql', this.log),
-            getEmailFromPendingCode: sql('queries/getEmailFromPendingCode.sql', this.log),
-            claimPendingAccount: sql('queries/claimPendingAccount.sql', this.log),
-            logVolunteerHours: sql('queries/logVolunteerHours.sql', this.log),
-            getVolunteerHours: sql('queries/getVolunteerHours.sql', this.log),
+            register: this.buildSql('queries/registerDj.sql'),
+            findByEmailAndPassword: this.buildSql('queries/findByEmailAndPassword.sql'),
+            getPermissionLevels: this.buildSql('queries/getPermissionLevels.sql'),
+            hasSignedMostRecentAgreement: this.buildSql('queries/hasSignedMostRecentAgreement.sql'),
+            findById: this.buildSql('queries/findById.sql'),
+            getSingleUnconfirmedAccount: this.buildSql('queries/getSingleUnconfirmedAccount.sql'),
+            getPendingPermissionsByEmail: this.buildSql('queries/getPendingPermissionsByEmail.sql'),
+            getEmailFromPendingCode: this.buildSql('queries/getEmailFromPendingCode.sql'),
+            claimPendingAccount: this.buildSql('queries/claimPendingAccount.sql'),
+            logVolunteerHours: this.buildSql('queries/logVolunteerHours.sql'),
+            getVolunteerHours: this.buildSql('queries/getVolunteerHours.sql'),
+            changePassword: this.buildSql('queries/changePassword.sql'),
         };
         this.columnSets = {
-            addManyPermissions: new this.pgp.helpers.ColumnSet(['community_member_id', 'permission_level'], {table: 'permission_level_t'}),
+            addManyPermissions: this.buildColumnSet(['community_member_id', 'permission_level'], 'permission_level_t'),
         };
 
     }
@@ -242,9 +258,8 @@ class DJManagement {
     }
 }
 
-class ExecBoardManagement {
-    private readonly log = new Logger('exec-management');
-    private readonly queries: {
+class ExecBoardManagement extends ActionManagement {
+    protected readonly queries: {
         getUnconfirmedAccounts: QueryFile,
         getHoursByEmail: QueryFile,
         getUnconfirmedHours: QueryFile,
@@ -253,27 +268,28 @@ class ExecBoardManagement {
         getAllUserInfo: QueryFile,
         deleteAllPermissions: QueryFile,
     };
-    private readonly columnSets: {
+    protected readonly columnSets: {
         addPendingMembers: pgpLib.ColumnSet,
         addPendingPermissions: pgpLib.ColumnSet,
         changePermissions: pgpLib.ColumnSet,
     };
 
-    constructor(private readonly pgp: pgpLib.IMain, private readonly db: pgpLib.IDatabase<any>) {
+    constructor(protected readonly pgp: pgpLib.IMain, protected readonly db: pgpLib.IDatabase<any>) {
+        super();
         this.log = new Logger('exec-management');
         this.queries = {
-            getUnconfirmedAccounts: sql('queries/getUnconfirmedAccounts.sql', this.log),
-            getHoursByEmail: sql('queries/getHoursByEmail.sql', this.log),
-            getUnconfirmedHours: sql('queries/getUnconfirmedHours.sql', this.log),
-            approveHours: sql('queries/approveHours.sql', this.log),
-            deleteHours: sql('queries/deleteHours.sql', this.log),
-            getAllUserInfo: sql('queries/getAllUserInfo.sql', this.log),
-            deleteAllPermissions: sql('queries/deleteAllPermissions.sql', this.log),
+            getUnconfirmedAccounts: this.buildSql('queries/getUnconfirmedAccounts.sql'),
+            getHoursByEmail: this.buildSql('queries/getHoursByEmail.sql'),
+            getUnconfirmedHours: this.buildSql('queries/getUnconfirmedHours.sql'),
+            approveHours: this.buildSql('queries/approveHours.sql'),
+            deleteHours: this.buildSql('queries/deleteHours.sql'),
+            getAllUserInfo: this.buildSql('queries/getAllUserInfo.sql'),
+            deleteAllPermissions: this.buildSql('queries/deleteAllPermissions.sql'),
         };
         this.columnSets = {
-            addPendingMembers: new this.pgp.helpers.ColumnSet(['email'], {table: 'pending_community_members_t'}),
-            addPendingPermissions: new this.pgp.helpers.ColumnSet(['pending_community_members_email', 'permission_level'], {table: 'pending_members_permissions_t'}),
-            changePermissions: new this.pgp.helpers.ColumnSet(['community_member_id', 'permission_level'], {table: 'permission_level_t'}),
+            addPendingMembers: this.buildColumnSet(['email'], 'pending_community_members_t'),
+            addPendingPermissions: this.buildColumnSet(['pending_community_members_email', 'permission_level'], 'pending_members_permissions_t'),
+            changePermissions: this.buildColumnSet(['community_member_id', 'permission_level'], 'permission_level_t'),
         }
     }
 
