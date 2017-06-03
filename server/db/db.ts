@@ -133,6 +133,10 @@ class DJManagement extends ActionManagement {
 
     }
 
+    async changePassword(communityMemberId: number, newPasswordHash: string): Promise<void> {
+        await this.db.none(this.queries.changePassword, [newPasswordHash, communityMemberId]);
+    }
+
     async claimPendingAccount(email: HTMLEscapedString): Promise<void> {
         await this.db.none(this.queries.claimPendingAccount, [email.value]);
     }
