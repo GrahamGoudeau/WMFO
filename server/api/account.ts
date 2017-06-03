@@ -24,6 +24,27 @@ export async function handleProfile(req: express.Request,
     });
 }
 
+export async function handleChangePassword(req: express.Request,
+                                           res: express.Response,
+                                           authToken: AuthToken): Promise<void> {
+    const id: number = authToken.id;
+
+    const body: { newPassword: string } = req.body;
+    if (!validateKeys(body, { newPassword: COMMON_FIELD_SHAPES.nonemptyString })) {
+        badRequest(res);
+        return;
+    }
+
+    try {
+        await db.dj.changePassword(id, new HashedPassword(authToken.email.toLowerCase(), body.newPassword));
+    } catch (e) {
+        badRequest(res, 'DB_ERROR');
+        return;
+    }
+
+    jsonResponse(res, { authToken: buildAuthToken(authToken.email, authToken.id, authToken.permissionLevels) });
+}
+
 export async function handleGetUnconfirmedAccount(req: express.Request,
                                                   res: express.Response): Promise<void> {
     const body: { code: string } = req.body;

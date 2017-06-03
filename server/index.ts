@@ -74,6 +74,12 @@ const changePermissionsBuilder: SecureRouteBuilder =
                                                EXEC_BOARD_PERMISSIONS)
     .setHttpMethod(HttpMethod.POST);
 
+const changePasswordBuilder: SecureRouteBuilder =
+    <SecureRouteBuilder>new SecureRouteBuilder('/api/account/changePassword',
+                                               Account_api.handleChangePassword,
+                                               ALL_PERMISSIONS)
+    .setHttpMethod(HttpMethod.POST);
+
 const getUnconfirmedAccountBuilder: InsecureRouteBuilder =
     <InsecureRouteBuilder>new InsecureRouteBuilder('/api/account/getUnconfirmedAccount', Account_api.handleGetUnconfirmedAccount)
     .setHttpMethod(HttpMethod.POST);
@@ -113,6 +119,7 @@ const secureRoutes: SecureRoute[] = [
     new SecureRoute(deleteHours),
     new SecureRoute(manageUsersBuilder),
     new SecureRoute(changePermissionsBuilder),
+    new SecureRoute(changePasswordBuilder),
 ];
 
 routeManager.addInsecureRoutes(insecureRoutes);
