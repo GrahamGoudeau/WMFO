@@ -16,10 +16,13 @@ export default class Config {
     private readonly registeredFields = {
         booleanFields: <string[]>[
             'PRODUCTION',
+            'MAIL_DEBUG',
         ],
         stringFields: <string[]>[
             'DEV_DATABASE_URL',
             'DATABASE_URL',
+            'SPARKPOST_API_KEY',
+            'DOMAIN_NAME',
         ],
         numberFields: <string[]>[
             'PORT',
