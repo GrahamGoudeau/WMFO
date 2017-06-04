@@ -16,9 +16,20 @@ import PendingMembers from "./components/PendingMembers";
 import { PermissionLevel, CommunityMemberRecord, AuthState, EXEC_BOARD_PERMISSIONS, DJ_PERMISSIONS } from "./ts/authState";
 import WMFORequest from "./ts/request";
 import Maybe from "./ts/maybe";
+import WMFOStyles from "./ts/styles";
 
 interface AppState {
     user: Maybe<CommunityMemberRecord>;
+}
+
+class NavbarLi extends React.Component<{}, {}> {
+    constructor(props: any) {
+        super(props);
+    }
+
+    render() {
+        return <li style={WMFOStyles.NAVBAR_ITEM_STYLE}>{this.props.children}</li>
+    }
 }
 
 class App extends React.Component<{}, AppState> {
@@ -66,7 +77,7 @@ class App extends React.Component<{}, AppState> {
         );
 
         const defaultNavbar = (
-            <li><Link to="/contact">Contact Us</Link></li>
+            <NavbarLi><Link to="/contact">Contact Us</Link></NavbarLi>
         );
 
         const navbarInternals: JSX.Element[] = [];
@@ -84,8 +95,8 @@ class App extends React.Component<{}, AppState> {
             }
         });
         const navbar = (
-            <ul>
-                <li><Link to="/">{AuthState.getInstance().getState().isJust() ? 'Home' : 'Log In'}</Link></li>
+            <ul style={WMFOStyles.NAVBAR_STYLE}>
+                <NavbarLi><Link to="/">{AuthState.getInstance().getState().isJust() ? 'Home' : 'Log In'}</Link></NavbarLi>
                 {navbarInternals}
             </ul>
         );
@@ -96,17 +107,23 @@ class App extends React.Component<{}, AppState> {
                 })
         );
         return (
-            <div style={{ width: '100%', height: '100%'}}>
-                <Link to="/">
-                    <img id="logo" src="/dist/static/img/Logo-1.png" alt="WMFO"/>
-                </Link>
-                <div id="signInMessage">
-                    {signInMessage}
-                    <br/>
-                    WebMaster: grahamgoudeau@gmail.com
+            <div style={WMFOStyles.GLOBAL_STYLE}>
+                <div>
+                    <div>
+                        <Link to="/">
+                            <img style={WMFOStyles.LOGO_STYLE} src="/dist/static/img/Logo-1.png" alt="WMFO"/>
+                        </Link>
+                        <div style={WMFOStyles.SIGN_IN_MESSAGE}>
+                            {signInMessage}
+                            <br/>
+                            WebMaster: grahamgoudeau@gmail.com
+                        </div>
+                    </div>
+                    {navbar}
                 </div>
-                {navbar}
-                {this.props.children}
+                <div>
+                    {this.props.children}
+                </div>
             </div>
         );
     }

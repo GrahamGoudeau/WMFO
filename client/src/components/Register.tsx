@@ -90,9 +90,8 @@ export default class WMFORegister extends FormComponent<RegisterProps, RegisterS
                 code: this.state.code.valueOr(null),
                 password: this.state.password
             });
-            WMFORequest.getInstance().setAuthHeader(response.data.authToken);
             await AuthState.getInstance().deauthorize();
-
+            WMFORequest.getInstance().setAuthHeader(response.data.authToken);
             await AuthState.getInstance().updateState(true);
             browserHistory.push('/');
         } catch (e) {

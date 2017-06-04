@@ -69,6 +69,7 @@ export default class PendingMembers extends Component<{}, PendingMembersState> {
                 borderRadius: '7px',
                 padding: '1%',
                 marginTop: '2%',
+                marginBottom: '1%',
                 textAlign: 'center',
             };
             const userInfo = this.state.pendingMembers.map((member: PendingCommunityMember) => {

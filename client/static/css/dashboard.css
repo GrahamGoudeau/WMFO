@@ -12,6 +12,7 @@ body {
     width:660px;height:344px
 }
 
+/*
 form {
     font-family: "Avenir";
     list-style-type: none;
@@ -20,6 +21,7 @@ form {
     border: 1px solid;
     width:20%;
 }
+*/
 
 ul {
 	font-family: "Avenir";
@@ -93,4 +95,12 @@ li a.active {
     border: 2px solid;
     border-radius: 15px;
     float:right;
+}
+
+*, html {
+    margin:0;
+    padding:0;  
+}
+html, body {
+    height: 100%;
 }

@@ -7,7 +7,7 @@ import { FormComponent, ErrorState } from "./Form";
 import WMFORequest from "../ts/request";
 import { browserHistory } from "react-router";
 import DatePicker from "react-datepicker";
-
+import WMFOStyles from "../ts/styles";
 
 interface LogHoursState {
     task: string;
@@ -87,13 +87,14 @@ class LogHours extends FormComponent<{}, LogHoursState> {
 
     render() {
         return (
-            <form onSubmit={this.handleSubmit.bind(this)}>
+            <form style={WMFOStyles.FORM_STYLE} onSubmit={this.handleSubmit.bind(this)}>
                 <p style={{textAlign: 'center'}}>Log Volunteer Hours</p>
                 <label>Date of volunteer work:</label>
                 <DatePicker value={this.state.date} onChange={this.handleDateUpdate.bind(this)}/>
                 <br/>
                 <label>Description of volunteer task</label>
-                <textarea id="description" value={this.state.description} onChange={e => this.handleTextAreaUpdate.bind(this)((e as any).target.value)}/>
+                <br/>
+                <textarea style={{display: 'block', height: '75px'}} id="description" value={this.state.description} onChange={e => this.handleTextAreaUpdate.bind(this)((e as any).target.value)}/>
 
                 <br/>
                 <label>Number of hours worked</label>

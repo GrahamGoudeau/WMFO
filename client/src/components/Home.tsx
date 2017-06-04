@@ -5,6 +5,7 @@ import { ProfileView } from "./ProfileView";
 import Component from "./Component";
 import { FormComponent, ErrorState } from "./Form";
 import WMFORequest from "../ts/request";
+import WMFOStyles from "../ts/styles";
 
 interface HomeState {
     user: Maybe<CommunityMemberRecord>;
@@ -14,6 +15,8 @@ interface HomeState {
 interface LoginPromptState {
     email: string;
     password: string;
+    error: boolean;
+    errorMessage: string;
 }
 
 class LoginPrompt extends FormComponent<{}, LoginPromptState> {
@@ -23,7 +26,9 @@ class LoginPrompt extends FormComponent<{}, LoginPromptState> {
         this.handleSubmit = this.handleSubmit.bind(this);
         this.state = {
             email: '',
-            password: ''
+            password: '',
+            error: false,
+            errorMessage: '',
         };
     }
 
@@ -38,17 +43,24 @@ class LoginPrompt extends FormComponent<{}, LoginPromptState> {
             req.setAuthHeader(response.data.authToken);
             AuthState.getInstance().authorize(response.data.userData);
         } catch (e) {
-            console.log('oops', e);
+            console.log('exception', e);
+            await this.updateStateAsync('error', true);
+            await this.updateStateAsync('errorMessage', 'Could not log in- make sure your email and password are both correct.');
         }
     }
 
     render() {
         return (
-            <form onSubmit={this.handleSubmit}>
-                <input type="email" id="email" placeholder="email" onChange={this.handleChange.bind(this)}/>
-                <input type="password" id="password" placeholder="password" onChange={this.handleChange.bind(this)}/>
-                <input type="submit" value="Log In" onChange={this.handleChange.bind(this)}/>
-            </form>
+            <div style={WMFOStyles.FORM_STYLE}>
+                <form onSubmit={this.handleSubmit}>
+                    <input style={WMFOStyles.TEXT_INPUT_STYLE} type="email" id="email" placeholder="email" onChange={this.handleChange.bind(this)}/>
+                    <input style={WMFOStyles.TEXT_INPUT_STYLE} type="password" id="password" placeholder="password" onChange={this.handleChange.bind(this)}/>
+                    <button style={WMFOStyles.BUTTON_STYLE} onClick={this.handleSubmit}>Log In</button>
+                    <p style={{ padding: '5%', textAlign: 'center', display: this.state.error ? 'block' : 'none' }}>
+                        {this.state.errorMessage}
+                    </p>
+                </form>
+            </div>
         );
     }
 }
@@ -81,7 +93,7 @@ export class Home extends Component<{}, HomeState> {
                 (<ProfileView onUpdate={_ => null} isExecBoardManaging={false} profileData={m}/>)
         });
         return (
-            <div style={{color: 'white'}}>
+            <div>
                 {this.state.querying ? null : homePage}
             </div>
         );

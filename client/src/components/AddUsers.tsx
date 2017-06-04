@@ -1,11 +1,12 @@
 import * as React from "react";
 import Maybe from "../ts/maybe";
-import { PermissionLevel, AuthState, CommunityMemberRecord } from "../ts/authState";
+import { PERMISSION_LEVEL_STRINGS, PermissionLevel, AuthState, CommunityMemberRecord } from "../ts/authState";
 import Component from "./Component";
 import { FormComponent, ErrorState } from "./Form";
 import WMFORequest from "../ts/request";
 import { browserHistory } from "react-router";
 import { Message } from "./Message";
+import WMFOStyles from "../ts/styles";
 
 interface AddUsersState {
     signedIn: boolean;
@@ -16,6 +17,13 @@ interface AddSingleUserFormState {
     djEmail: string;
     isStudentDj: boolean;
     isCommunityDj: boolean;
+    isGM: boolean;
+    isAGM: boolean;
+    isOD: boolean;
+    isPD: boolean;
+    isSC: boolean;
+    isVC: boolean;
+    isWebMaster: boolean;
     djConflict: boolean;
     noPermissions: boolean;
     hasSubmitted: boolean;
@@ -32,6 +40,13 @@ class AddSingleUserForm extends FormComponent<{}, AddSingleUserFormState> {
             djEmail: '',
             isStudentDj: false,
             isCommunityDj: false,
+            isGM: false,
+            isAGM: false,
+            isOD: false,
+            isPD: false,
+            isSC: false,
+            isVC: false,
+            isWebMaster: false,
             djConflict: false,
             noPermissions: false,
             hasSubmitted: false,
@@ -45,13 +60,28 @@ class AddSingleUserForm extends FormComponent<{}, AddSingleUserFormState> {
         condition: (state: AddSingleUserFormState) => state.isStudentDj && state.isCommunityDj
     }, {
         field: 'noPermissions',
-        condition: (state: AddSingleUserFormState) => !state.isStudentDj && !state.isCommunityDj
+        condition: (state: AddSingleUserFormState) => !(state.isStudentDj  ||
+            state.isCommunityDj ||
+            state.isGM ||
+            state.isAGM ||
+            state.isOD ||
+            state.isPD ||
+            state.isSC ||
+            state.isVC ||
+            state.isWebMaster)
     }];
 
     private buildPermissionArray(): PermissionLevel[] {
         const permissions: PermissionLevel[] = [];
         if (this.state.isStudentDj) permissions.push('STUDENT_DJ');
         if (this.state.isCommunityDj) permissions.push('COMMUNITY_DJ');
+        if (this.state.isGM) permissions.push('GENERAL_MANAGER');
+        if (this.state.isAGM) permissions.push('ASSISTANT_GENERAL_MANAGER');
+        if (this.state.isOD) permissions.push('OPERATIONS_DIRECTOR');
+        if (this.state.isPD) permissions.push('PROGRAMMING_DIRECTOR');
+        if (this.state.isSC) permissions.push('SCHEDULING_COORDINATOR');
+        if (this.state.isVC) permissions.push('VOLUNTEER_COORDINATOR');
+        if (this.state.isWebMaster) permissions.push('WEBMASTER');
 
         return permissions;
     }
@@ -76,6 +106,13 @@ class AddSingleUserForm extends FormComponent<{}, AddSingleUserFormState> {
                 djEmail: '',
                 isStudentDj: false,
                 isCommunityDj: false,
+                isGM: false,
+                isAGM: false,
+                isOD: false,
+                isPD: false,
+                isSC: false,
+                isVC: false,
+                isWebMaster: false,
                 djConflict: false,
                 noPermissions: false,
                 hasSubmitted: true,
@@ -92,18 +129,50 @@ class AddSingleUserForm extends FormComponent<{}, AddSingleUserFormState> {
 
     render() {
         return (
-            <form onSubmit={this.handleSubmit.bind(this)}>
+            <form style={WMFOStyles.FORM_STYLE} onSubmit={this.handleSubmit.bind(this)}>
             <p style={{ color: '#333', textAlign: 'center' }}>Adding one user</p>
                 <label htmlFor="djEmail">New User Email</label>
                 <input type="email" value={this.state.djEmail} id="djEmail" onChange={this.handleChange.bind(this)}/>
                 <br/>
                 <label htmlFor="isStudentDj">Student DJ</label>
                 <input key={this.state.isStudentDj ? 0 : 1} name="isStudentDj" type="checkbox" id="isStudentDj" onChange={this.handleChange.bind(this)} checked={this.state.isStudentDj}/>
-
                 <br/>
+
                 <label htmlFor="isCommunityDj">Community DJ</label>
                 <input key={this.state.isCommunityDj ? 2 : 3} name="isCommunityDj" type="checkbox" id="isCommunityDj" onChange={this.handleChange.bind(this)} checked={this.state.isCommunityDj}/>
                 <br/>
+
+                <label htmlFor="isGM">General Manager</label>
+                <input key={this.state.isGM ? 4 : 5} name="isGM" type="checkbox" id="isGM" onChange={this.handleChange.bind(this)} checked={this.state.isGM}/>
+                <br/>
+
+                <label htmlFor="isAGM">Assistant GM</label>
+                <input key={this.state.isAGM ? 6 : 7} name="isAGM" type="checkbox" id="isAGM" onChange={this.handleChange.bind(this)} checked={this.state.isAGM}/>
+                <br/>
+
+                <label htmlFor="isOD">Operations Director</label>
+                <input key={this.state.isOD ? 8 : 9} name="isOD" type="checkbox" id="isOD" onChange={this.handleChange.bind(this)} checked={this.state.isOD}/>
+                <br/>
+
+                <label htmlFor="isPD">Programming Director</label>
+                <input key={this.state.isPD ? 10 : 11} name="isPD" type="checkbox" id="isPD" onChange={this.handleChange.bind(this)} checked={this.state.isPD}/>
+                <br/>
+
+                <label htmlFor="isSC">Scheduling Coordinator</label>
+                <input key={this.state.isSC ? 12 : 13} name="isSC" type="checkbox" id="isSC" onChange={this.handleChange.bind(this)} checked={this.state.isSC}/>
+                <br/>
+
+                <label htmlFor="isVC">Volunteer Coordinator</label>
+                <input key={this.state.isVC ? 14 : 15} name="isVC" type="checkbox" id="isVC" onChange={this.handleChange.bind(this)} checked={this.state.isVC}/>
+                <br/>
+
+                <label htmlFor="isWebMaster">WebMaster</label>
+                <input key={this.state.isWebMaster ? 16 : 17} name="isWebMaster" type="checkbox" id="isWebMaster" onChange={this.handleChange.bind(this)} checked={this.state.isWebMaster}/>
+                <br/>
+
+                <p style={{ padding: '5%', display: this.state.noPermissions ? 'block' : 'none' }}>
+                    Must select at least one permission level.
+                </p>
                 <input type="submit" value="Submit"/>
                 <p style={{
                     display: this.state.hasSubmitted ? 'block' : 'none'
@@ -233,16 +302,18 @@ class AddMultipleUserForm extends FormComponent<{}, AddMultipleUserFormState> {
             'An error occurred while submitting. Make sure none of the emails you entered are already users.  If the error keeps occurring, contact the webmaster.' :
             'Successfully submitted! All new users will soon receive an email with their unique URL.  If the email does not send, go to the \'Pending Members\' tab to find their unique URL and send it to them manually.';
         return (
-            <form onSubmit={this.handleSubmit.bind(this)}>
+            <form style={WMFOStyles.FORM_STYLE} onSubmit={this.handleSubmit.bind(this)}>
                 <p style={{color: '#333', textAlign: 'center' }}>Fill out at least one of the boxes below to add multiple users.</p>
                 <p style={{color: '#333', textAlign: 'center' }}>Enter comma-separated lists of email addresses</p>
                 <label>Student DJs (batch entry)</label>
-                <textarea id="studentDJs" value={this.state.studentDJs} onChange={this.handleChange.bind(this)}/>
+                <br/>
+                <textarea style={{display: 'block', height: '50px'}} id="studentDJs" value={this.state.studentDJs} onChange={this.handleChange.bind(this)}/>
                 <Message showCondition={this.state.studentDJsError} message="Must be comma-separated email addresses" style={{color: 'red'}}/>
                 <br/>
 
                 <label>Community DJs (batch entry)</label>
-                <textarea id="communityDJs" value={this.state.communityDJs} onChange={this.handleChange.bind(this)}/>
+                <br/>
+                <textarea style={{display: 'block', height: '50px'}} id="communityDJs" value={this.state.communityDJs} onChange={this.handleChange.bind(this)}/>
                 <Message showCondition={this.state.communityDJsError} message="Must be comma-separated email addresses" style={{color: 'red'}}/>
                 <br/>
                 <Message showCondition={this.state.bothBlank} message="Cannot have both fields blank" style={{color: 'red'}}/>
