@@ -5,6 +5,7 @@ import { AllUserInfo, PendingCommunityMember, VolunteerHours, CommunityMemberRec
 import { buildNonObjectArrayShape, KeyShape, RequestShape, validateArray, HTMLEscapedString, COMMON_FIELD_SHAPES, validateKeys } from '../utils/functionalUtils';
 import { AuthToken, PermissionLevel, ResponseMessage, badRequest, jsonResponse, successResponse } from '../utils/requestUtils';
 import { buildAuthToken, hashPassword } from '../utils/security';
+import { Emailer } from "../utils/emailer";
 
 const log: Logger = new Logger('exec-api');
 const db: DB = DB.getInstance();
@@ -155,11 +156,13 @@ export async function handleAddPendingMembers(req: express.Request,
         }
     }));
     result.caseOf({
-        right: (_) => {
+        right: async (_) => {
             log.INFO('User', authToken.email, 'added', arr.length, 'users');
-            successResponse(res)
+            // TODO: await? must wait for all emails
+            //Emailer.getInstance().registerNotification([{firstName: 'test', email: 'test@gmail.com', url: 'localhost:5000'}]);
+            successResponse(res);
         },
-        left: (e) => {
+        left: async (e) => {
             log.INFO('User', authToken.email, 'failed to add users');
             badRequest(res, e);
         }

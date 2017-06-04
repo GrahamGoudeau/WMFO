@@ -10,6 +10,7 @@ import * as DJ_api from './api/dj';
 import * as Exec_api from './api/exec';
 import * as Account_api from './api/account';
 import { hashPassword } from './utils/security';
+import { Emailer } from './utils/emailer';
 
 const log: Logger = new Logger('init');
 log.INFO('Server starting');
@@ -22,6 +23,7 @@ app.use('/dist/', express.static(path.resolve(clientDir)));
 
 const CONFIG: Config = Config.getInstance();
 DB.getInstance();
+Emailer.getInstance();
 
 const routeManager = new RouteManager(app, '/');
 
