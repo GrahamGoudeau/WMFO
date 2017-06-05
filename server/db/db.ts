@@ -318,7 +318,7 @@ class ExecBoardManagement extends ActionManagement {
         });
     }
 
-    async addPendingMembers(pendingMembers: PendingCommunityMember[]): DBAsyncResult<{}> {
+    async addPendingMembers(pendingMembers: PendingCommunityMember[]): DBAsyncResult<{ email: string, code: string }[]> {
         const values = pendingMembers.map((member: PendingCommunityMember) => { return { email: member.email, code: member.code } });
         const permissionValues: { pending_community_members_email: string; permission_level: PermissionLevel }[] = [];
         pendingMembers.forEach((member: PendingCommunityMember) =>
@@ -331,15 +331,15 @@ class ExecBoardManagement extends ActionManagement {
         );
         try {
             const data = await this.db.tx(t => {
-                const q1 = t.none(this.pgp.helpers.insert(values, this.columnSets.addPendingMembers));
+                const q1 = t.many(this.pgp.helpers.insert(values, this.columnSets.addPendingMembers) + 'RETURNING email, code');
                 const q2 = t.none(this.pgp.helpers.insert(permissionValues, this.columnSets.addPendingPermissions));
 
                 return t.batch([q1, q2]);
             });
+            return Either.Right<ResponseMessage, { email: string, code: string }[]>(data[0]);
         } catch (e) {
-            return Either.Left<ResponseMessage, {}>(buildMessage(e, 'add pending members', this.log));
+            return Either.Left<ResponseMessage, { email: string, code: string }[]>(buildMessage(e, 'add pending members', this.log));
         }
-        return Either.Right<ResponseMessage, {}>({});
     }
 
     async getAllUserInfo(): Promise<AllUserInfo[]> {

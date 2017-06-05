@@ -5,6 +5,10 @@ import { AllUserInfo, PendingCommunityMember, VolunteerHours, CommunityMemberRec
 import { buildNonObjectArrayShape, KeyShape, RequestShape, validateArray, HTMLEscapedString, COMMON_FIELD_SHAPES, validateKeys } from '../utils/functionalUtils';
 import { AuthToken, PermissionLevel, ResponseMessage, badRequest, jsonResponse, successResponse } from '../utils/requestUtils';
 import { buildAuthToken, hashPassword } from '../utils/security';
+import { Emailer } from "../utils/emailer";
+import Config from "../utils/config";
+
+const CONFIG = Config.getInstance();
 
 const log: Logger = new Logger('exec-api');
 const db: DB = DB.getInstance();
@@ -148,18 +152,25 @@ export async function handleAddPendingMembers(req: express.Request,
         badRequest(res);
         return;
     }
-    const result: DBResult<{}> = await db.exec.addPendingMembers(arr.map((entry) => { 
+    const result: DBResult<{ email: string, code: string }[]> = await db.exec.addPendingMembers(arr.map((entry) => { 
         return {
             email: entry.email.toLowerCase(),
             permissionLevels: entry.permissionLevels
         }
     }));
     result.caseOf({
-        right: (_) => {
+        right: async (newUserData) => {
             log.INFO('User', authToken.email, 'added', arr.length, 'users');
-            successResponse(res)
+            const recipientData = newUserData.map(newUser => {
+                return {
+                    email: newUser.email,
+                    url: `${CONFIG.getStringConfig('DOMAIN_NAME')}/register/${newUser.code}`,
+                }
+            });
+            Emailer.getInstance().registerNotification(recipientData);
+            successResponse(res);
         },
-        left: (e) => {
+        left: async (e) => {
             log.INFO('User', authToken.email, 'failed to add users');
             badRequest(res, e);
         }
