@@ -59,11 +59,12 @@ class ProdEmailer extends Emailer {
                 setTimeout(() => {
                     self.log.INFO('Sending to', option.to, ', remaining:', mailOptions.map(opt => opt.to).slice(index + 1));
                     self.mailClient.sendMail(option, (error: any, info: any) => {
-                        if (error) {
+                        if (error || (info && info.rejected != null && info.rejected.length > 0)) {
                             self.log.ERROR('Mail send failed:', error);
                             resolve(option.to);
+                        } else {
+                            resolve(null);
                         }
-                        resolve(null);
                     });
                 }, thisDelay);
             });
