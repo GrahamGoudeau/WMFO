@@ -21,7 +21,8 @@ export default class Config {
         stringFields: <string[]>[
             'DEV_DATABASE_URL',
             'DATABASE_URL',
-            'SPARKPOST_API_KEY',
+            'MAIL_USER',
+            'MAIL_PASS',
             'DOMAIN_NAME',
         ],
         numberFields: <string[]>[
