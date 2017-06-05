@@ -5,6 +5,7 @@ import { PermissionLevel, AuthState, CommunityMemberRecord } from "../ts/authSta
 import Component from "./Component";
 import { FormComponent, ErrorState } from "./Form";
 import WMFORequest from "../ts/request";
+import WMFOStyle from "../ts/styles";
 
 interface RegisterState {
     code: Maybe<string>;
@@ -103,7 +104,7 @@ export default class WMFORegister extends FormComponent<RegisterProps, RegisterS
         let contents;
         if (!this.state.badCode && this.state.code.isJust()) {
             contents = (
-                <form onSubmit={this.handleSubmit.bind(this)}>
+                <form style={WMFOStyle.FORM_STYLE} onSubmit={this.handleSubmit.bind(this)}>
                     Creating account for: {this.state.email}
                     <br/>
 

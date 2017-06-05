@@ -54,7 +54,7 @@ export default class WMFORequest {
                 data: data ? data : {}
             });
         } catch (e) {
-            if (e.status === 401) {
+            if (e.status === 401 && window.location.pathname.indexOf('register') === -1) {
                 await AuthState.getInstance().deauthorize();
                 browserHistory.push('/');
                 throw e;
@@ -71,7 +71,7 @@ export default class WMFORequest {
                 headers: Object.assign({}, this.globalHeaders, headers ? headers : {})
             });
         } catch (e) {
-            if (e.status === 401) {
+            if (e.status === 401 && window.location.pathname.indexOf('register') === -1) {
                 await AuthState.getInstance().deauthorize();
                 browserHistory.push('/');
                 throw e;

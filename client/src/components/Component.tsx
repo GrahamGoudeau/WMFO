@@ -28,7 +28,7 @@ export default abstract class Component<P, S> extends React.Component<P, S> {
         super(props);
         const p: { location?: { pathname: string }} = props;
         AuthState.getInstance().updateState().then(s => {
-            if (s.isNothing() && p.location && p.location.pathname !== '/') {
+            if (s.isNothing() && p.location && p.location.pathname !== '/' && p.location.pathname.indexOf('register') === -1) {
                 browserHistory.push('/');
                 return;
             }
