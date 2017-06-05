@@ -6,6 +6,9 @@ import { buildNonObjectArrayShape, KeyShape, RequestShape, validateArray, HTMLEs
 import { AuthToken, PermissionLevel, ResponseMessage, badRequest, jsonResponse, successResponse } from '../utils/requestUtils';
 import { buildAuthToken, hashPassword } from '../utils/security';
 import { Emailer } from "../utils/emailer";
+import Config from "../utils/config";
+
+const CONFIG = Config.getInstance();
 
 const log: Logger = new Logger('exec-api');
 const db: DB = DB.getInstance();
@@ -149,17 +152,22 @@ export async function handleAddPendingMembers(req: express.Request,
         badRequest(res);
         return;
     }
-    const result: DBResult<{}> = await db.exec.addPendingMembers(arr.map((entry) => { 
+    const result: DBResult<{ email: string, code: string }[]> = await db.exec.addPendingMembers(arr.map((entry) => { 
         return {
             email: entry.email.toLowerCase(),
             permissionLevels: entry.permissionLevels
         }
     }));
     result.caseOf({
-        right: async (_) => {
+        right: async (newUserData) => {
             log.INFO('User', authToken.email, 'added', arr.length, 'users');
-            // TODO: await? must wait for all emails
-            //Emailer.getInstance().registerNotification([{firstName: 'test', email: 'test@gmail.com', url: 'localhost:5000'}]);
+            const recipientData = newUserData.map(newUser => {
+                return {
+                    email: newUser.email,
+                    url: `${CONFIG.getStringConfig('DOMAIN_NAME')}/register/${newUser.code}`,
+                }
+            });
+            Emailer.getInstance().registerNotification(recipientData);
             successResponse(res);
         },
         left: async (e) => {
