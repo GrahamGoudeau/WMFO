@@ -36,7 +36,6 @@ class ProdEmailer extends Emailer {
             pass: CONFIG.getStringConfig("MAIL_PASS"),
         }
     });
-    private readonly FROM_ADDRESS: string = 'do-not-reply@wmfo.org';
     private readonly DOMAIN_NAME: string = CONFIG.getStringConfig('DOMAIN_NAME');
     private readonly TEMPLATE_DIR: string = `${__dirname}/../templates/`;
 
