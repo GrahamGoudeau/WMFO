@@ -105,6 +105,7 @@ class DJManagement extends ActionManagement {
         logVolunteerHours: QueryFile,
         getVolunteerHours: QueryFile,
         changePassword: QueryFile,
+        checkIfPendingMemberIsValid: QueryFile,
     };
     protected readonly columnSets: {
         addManyPermissions: pgpLib.ColumnSet,
@@ -126,6 +127,7 @@ class DJManagement extends ActionManagement {
             logVolunteerHours: this.buildSql('queries/logVolunteerHours.sql'),
             getVolunteerHours: this.buildSql('queries/getVolunteerHours.sql'),
             changePassword: this.buildSql('queries/changePassword.sql'),
+            checkIfPendingMemberIsValid: this.buildSql('queries/checkIfPendingMemberIsValid.sql'),
         };
         this.columnSets = {
             addManyPermissions: this.buildColumnSet(['community_member_id', 'permission_level'], 'permission_level_t'),
@@ -135,10 +137,6 @@ class DJManagement extends ActionManagement {
 
     async changePassword(communityMemberId: number, newPasswordHash: HashedPassword): Promise<void> {
         await this.db.none(this.queries.changePassword, [newPasswordHash.value, communityMemberId]);
-    }
-
-    async claimPendingAccount(email: HTMLEscapedString): Promise<void> {
-        await this.db.none(this.queries.claimPendingAccount, [email.value]);
     }
 
     async getPermissionLevels(communityMemberId: number): Promise<PermissionLevel[]> {
@@ -242,7 +240,14 @@ class DJManagement extends ActionManagement {
         try {
             let idResult: number;
             await this.db.tx(t => {
-                return t.one(this.queries.register, [firstName.value, lastName.value, email.value, passwordHash.value, tuftsId || null], (a: { id: number }) => +a.id)
+                return t.one(this.queries.checkIfPendingMemberIsValid, [email.value], (a: { is_valid: boolean }) => a.is_valid)
+                    .then((isValid: boolean) => {
+                        if (!isValid) throw new Error(`Account ${email.value} already claimed`);
+                        return t.none(this.queries.claimPendingAccount, [email.value]);
+                    })
+                    .then((_: any) => t.one(this.queries.register,
+                                            [firstName.value, lastName.value, email.value, passwordHash.value, tuftsId || null],
+                                            (a: { id: number }) => +a.id))
                     .then((id: number) => {
                         idResult = id;
                         return t.map(this.queries.getPendingPermissionsByEmail, [email.value], (record: any) => ({
@@ -250,7 +255,7 @@ class DJManagement extends ActionManagement {
                             permission_level: record.permission_level
                         }));
                     })
-                    .then((insertInfo: { community_member_id: number; permission_level: PermissionLevel }) => {
+                    .then((insertInfo: { community_member_id: number; permission_level: PermissionLevel }[]) => {
                         return t.none(this.pgp.helpers.insert(insertInfo, this.columnSets.addManyPermissions));
                     });
             });

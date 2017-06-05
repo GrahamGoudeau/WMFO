@@ -125,7 +125,6 @@ export async function handleRegister(req: express.Request,
                 new HTMLEscapedString(body.lastName),
                 escapedEmail,
                 new HashedPassword(email, body.password));
-            await db.dj.claimPendingAccount(escapedEmail);
             return result;
         } catch (e) {
             log.ERROR('register blew up:', e);
