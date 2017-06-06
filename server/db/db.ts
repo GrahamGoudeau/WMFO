@@ -277,6 +277,9 @@ class ExecBoardManagement extends ActionManagement {
         getAllUserInfo: QueryFile,
         deleteAllPermissions: QueryFile,
         deletePendingMember: QueryFile,
+        createAPIKey: QueryFile,
+        deleteAPIKey: QueryFile,
+        getAPIKeys: QueryFile,
     };
     protected readonly columnSets: {
         addPendingMembers: pgpLib.ColumnSet,
@@ -296,6 +299,9 @@ class ExecBoardManagement extends ActionManagement {
             getAllUserInfo: this.buildSql('queries/getAllUserInfo.sql'),
             deleteAllPermissions: this.buildSql('queries/deleteAllPermissions.sql'),
             deletePendingMember: this.buildSql('queries/deletePendingMember.sql'),
+            createAPIKey: this.buildSql('queries/createAPIKey.sql'),
+            deleteAPIKey: this.buildSql('queries/deleteAPIKey.sql'),
+            getAPIKeys: this.buildSql('queries/getAPIKeys.sql'),
         };
         this.columnSets = {
             addPendingMembers: this.buildColumnSet(['email'], 'pending_community_members_t'),
@@ -306,6 +312,23 @@ class ExecBoardManagement extends ActionManagement {
 
     async deletePendingMember(code: string): Promise<void> {
         await this.db.none(this.queries.deletePendingMember, [code]);
+    }
+
+    async createAPIKey(appName: string): Promise<string> {
+        return await this.db.one(this.queries.createAPIKey, [appName], (a: { key: string }) => a.key);
+    }
+
+    async deleteAPIKey(code: string): Promise<void> {
+        await this.db.none(this.queries.deleteAPIKey, [code]);
+    }
+
+    async getAPIKeys(): Promise<{ appName: string, key: string }[]> {
+        return this.db.map(this.queries.getAPIKeys, [], (record: any) => {
+            return {
+                appName: record.app_name,
+                key: record.key,
+            };
+        });
     }
 
     async changePermissions(updatedPermissions: UpdatedPermissions): Promise<void> {

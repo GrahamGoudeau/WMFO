@@ -199,3 +199,9 @@ CREATE TABLE show_check_in_t (
     confirmed BOOLEAN NOT NULL DEFAULT FALSE,
     show_owner_id INTEGER REFERENCES show_owner_relation_t(id) NOT NULL
 );
+
+CREATE TABLE api_key_t (
+    id SERIAL PRIMARY KEY,
+    key UUID UNIQUE NOT NULL DEFAULT UUID_GENERATE_V4(),
+    app_name VARCHAR(200) CHECK (COALESCE(app_name, '') <> '')
+);
