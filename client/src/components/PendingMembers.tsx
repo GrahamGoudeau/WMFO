@@ -55,6 +55,19 @@ export default class PendingMembers extends Component<{}, PendingMembersState> {
         }
     }
 
+    private async handleDelete(e: any, code: string) {
+        e.preventDefault();
+        try {
+            await WMFORequest.getInstance().POST('/api/exec/deletePendingMember', {
+                code: code
+            });
+            await this.updateStateAsync('pendingMembers', this.state.pendingMembers.filter((member: PendingCommunityMember) => member.code !== code));
+        } catch (e) {
+            alert("Something went wrong! Contact the webmaster if this keeps happening.");
+            console.log("exception:", e);
+        }
+    }
+
     render() {
         if (this.state.querying || this.state.error) {
             return null;
@@ -62,6 +75,9 @@ export default class PendingMembers extends Component<{}, PendingMembersState> {
             const rowStyle = {
                 marginTop: '10%',
                 marginBottom: '10%'
+            };
+            const cellStyle = {
+                paddingBottom: '1%',
             };
             const noticeStyle = {
                 color: '#333',
@@ -79,10 +95,10 @@ export default class PendingMembers extends Component<{}, PendingMembersState> {
 
                 // TODO: deletion
                 return (<tr style={rowStyle}>
-                    <td>{member.email}</td>
-                    <td>{permissionString}</td>
-                    <td>{`${this.BASE_URL}/register/${member.code}`}</td>
-                    <td><a href="javaScript:void(0);"></a></td>
+                    <td style={cellStyle}>{member.email}</td>
+                    <td style={cellStyle}>{permissionString}</td>
+                    <td style={cellStyle}>{`${this.BASE_URL}/register/${member.code}`}</td>
+                    <td style={cellStyle}><a href="javaScript:void(0);" onClick={e => this.handleDelete.bind(this)(e, member.code)}>Delete</a></td>
                 </tr>);
             });
             const noMembersInfo = (
@@ -95,11 +111,16 @@ export default class PendingMembers extends Component<{}, PendingMembersState> {
                     <table style={{
                         backgroundColor: '#fefefe',
                         borderRadius: '7px',
-                        padding: '1%',
                         width: '100%',
                         textAlign: 'center',
+                        padding: '1%',
                     }}>
-                        <tr style={rowStyle}><th>Email</th><th>Permissions</th><th>Unique URL</th><th></th></tr>
+                        <tr style={rowStyle}>
+                            <th>Email</th>
+                            <th>Permissions</th>
+                            <th>Unique URL</th>
+                            <th>Delete?</th>
+                        </tr>
                         {userInfo}
                     </table>
                 </div>
