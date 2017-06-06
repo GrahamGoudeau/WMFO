@@ -119,7 +119,7 @@ FOR EACH ROW
 EXECUTE PROCEDURE check_member_not_already_exist();
 
 CREATE TABLE pending_members_permissions_t (
-    pending_community_members_email VARCHAR(100) REFERENCES pending_community_members_t(email),
+    pending_community_members_email VARCHAR(100) REFERENCES pending_community_members_t(email) ON DELETE CASCADE,
     permission_level permission_level_e NOT NULL,
     PRIMARY KEY(pending_community_members_email, permission_level)
 );
