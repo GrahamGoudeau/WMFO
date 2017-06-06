@@ -46,6 +46,7 @@ export async function handleDeletePendingMember(req: express.Request,
         log.ERROR('exception deleting pending member:', e);
         badRequest(res, 'DB_ERROR');
     }
+    log.INFO(authToken.email, 'deleted pending member');
     successResponse(res);
 }
 
