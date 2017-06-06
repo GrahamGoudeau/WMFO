@@ -276,6 +276,7 @@ class ExecBoardManagement extends ActionManagement {
         deleteHours: QueryFile,
         getAllUserInfo: QueryFile,
         deleteAllPermissions: QueryFile,
+        deletePendingMember: QueryFile,
     };
     protected readonly columnSets: {
         addPendingMembers: pgpLib.ColumnSet,
@@ -294,12 +295,17 @@ class ExecBoardManagement extends ActionManagement {
             deleteHours: this.buildSql('queries/deleteHours.sql'),
             getAllUserInfo: this.buildSql('queries/getAllUserInfo.sql'),
             deleteAllPermissions: this.buildSql('queries/deleteAllPermissions.sql'),
+            deletePendingMember: this.buildSql('queries/deletePendingMember.sql'),
         };
         this.columnSets = {
             addPendingMembers: this.buildColumnSet(['email'], 'pending_community_members_t'),
             addPendingPermissions: this.buildColumnSet(['pending_community_members_email', 'permission_level'], 'pending_members_permissions_t'),
             changePermissions: this.buildColumnSet(['community_member_id', 'permission_level'], 'permission_level_t'),
         }
+    }
+
+    async deletePendingMember(code: string): Promise<void> {
+        await this.db.none(this.queries.deletePendingMember, [code]);
     }
 
     async changePermissions(updatedPermissions: UpdatedPermissions): Promise<void> {
