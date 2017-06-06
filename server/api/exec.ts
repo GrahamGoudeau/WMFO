@@ -50,6 +50,64 @@ export async function handleDeletePendingMember(req: express.Request,
     successResponse(res);
 }
 
+export async function handleCreateAPIKey(req: express.Request,
+                                         res: express.Response,
+                                         authToken: AuthToken): Promise<void> {
+    if (!req.body) {
+        badRequest(res);
+        return;
+    }
+
+    const body: { appName: string } = req.body;
+    if (!validateKeys(body, { appName: COMMON_FIELD_SHAPES.nonemptyString })) {
+        badRequest(res);
+        return;
+    }
+
+    try {
+        const key: string = await db.exec.createAPIKey(body.appName);
+        jsonResponse(res, { newKey: { appName: body.appName, key: key } });
+    } catch (e) {
+        log.ERROR('could not create API key', e);
+        badRequest(res, 'DB_ERROR');
+    }
+}
+
+export async function handleDeleteAPIKey(req: express.Request,
+                                         res: express.Response,
+                                         authToken: AuthToken): Promise<void> {
+    if (!req.body) {
+        badRequest(res);
+        return;
+    }
+
+    const body: { key: string } = req.body;
+    if (!validateKeys(body, { key: COMMON_FIELD_SHAPES.uuid })) {
+        badRequest(res);
+        return;
+    }
+
+    try {
+        await db.exec.deleteAPIKey(body.key);
+        successResponse(res);
+    } catch (e) {
+        log.ERROR('could not delete key', body.key, e);
+        badRequest(res, 'DB_ERROR');
+    }
+}
+
+export async function handleGetAPIKeys(req: express.Request,
+                                       res: express.Response,
+                                       authToken: AuthToken): Promise<void> {
+    try {
+        const data: { appName: string, key: string }[] = await db.exec.getAPIKeys();
+        jsonResponse(res, { apiKeys: data });
+    } catch (e) {
+        log.ERROR('could not get API keys', e);
+        badRequest(res, 'DB_ERROR');
+    }
+}
+
 export async function handleChangePermissions(req: express.Request,
                                               res: express.Response,
                                               authToken: AuthToken): Promise<void> {

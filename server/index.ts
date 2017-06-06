@@ -102,6 +102,23 @@ const deletePendingMember: SecureRouteBuilder =
                                                EXEC_BOARD_PERMISSIONS)
     .setHttpMethod(HttpMethod.POST);
 
+const createAPIKey: SecureRouteBuilder =
+    <SecureRouteBuilder>new SecureRouteBuilder('/api/exec/createAPIKey',
+                                               Exec_api.handleCreateAPIKey,
+                                               EXEC_BOARD_PERMISSIONS)
+    .setHttpMethod(HttpMethod.POST);
+
+const deleteAPIKey: SecureRouteBuilder =
+    <SecureRouteBuilder>new SecureRouteBuilder('/api/exec/deleteAPIKey',
+                                               Exec_api.handleDeleteAPIKey,
+                                               EXEC_BOARD_PERMISSIONS)
+    .setHttpMethod(HttpMethod.POST);
+
+const getAPIKeys: SecureRouteBuilder =
+    <SecureRouteBuilder>new SecureRouteBuilder('/api/exec/getAPIKeys',
+                                               Exec_api.handleGetAPIKeys,
+                                               EXEC_BOARD_PERMISSIONS);
+
 const loginRoute: InsecureRoute = new InsecureRoute(loginRouteBuilder);
 const registerRoute: InsecureRoute = new InsecureRoute(registerRouteBuilder);
 const logHoursRoute: SecureRoute = new SecureRoute(logHoursBuilder);
@@ -129,6 +146,9 @@ const secureRoutes: SecureRoute[] = [
     new SecureRoute(changePermissionsBuilder),
     new SecureRoute(changePasswordBuilder),
     new SecureRoute(deletePendingMember),
+    new SecureRoute(createAPIKey),
+    new SecureRoute(deleteAPIKey),
+    new SecureRoute(getAPIKeys),
 ];
 
 routeManager.addInsecureRoutes(insecureRoutes);
