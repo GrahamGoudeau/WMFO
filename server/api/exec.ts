@@ -28,6 +28,27 @@ export async function handleGetUnconfirmedAccounts(req: express.Request,
     }
 }
 
+export async function handleDeletePendingMember(req: express.Request,
+                                                res: express.Response,
+                                                authToken: AuthToken): Promise<void> {
+    const body: { code: string } = req.body;
+    if (!body) {
+        badRequest(res);
+        return;
+    }
+    if (!validateKeys(body, { code: COMMON_FIELD_SHAPES.uuid })) {
+        badRequest(res);
+        return;
+    }
+    try {
+        await db.exec.deletePendingMember(body.code);
+    } catch (e) {
+        log.ERROR('exception deleting pending member:', e);
+        badRequest(res, 'DB_ERROR');
+    }
+    successResponse(res);
+}
+
 export async function handleChangePermissions(req: express.Request,
                                               res: express.Response,
                                               authToken: AuthToken): Promise<void> {

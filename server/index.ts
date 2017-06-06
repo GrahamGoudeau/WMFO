@@ -96,6 +96,12 @@ const deleteHours: SecureRouteBuilder =
         (req, res, token) => Exec_api.handleResolveHours(req, res, token, true),
         EXEC_BOARD_PERMISSIONS).setHttpMethod(HttpMethod.POST);
 
+const deletePendingMember: SecureRouteBuilder =
+    <SecureRouteBuilder>new SecureRouteBuilder('/api/exec/deletePendingMember',
+                                               Exec_api.handleDeletePendingMember,
+                                               EXEC_BOARD_PERMISSIONS)
+    .setHttpMethod(HttpMethod.POST);
+
 const loginRoute: InsecureRoute = new InsecureRoute(loginRouteBuilder);
 const registerRoute: InsecureRoute = new InsecureRoute(registerRouteBuilder);
 const logHoursRoute: SecureRoute = new SecureRoute(logHoursBuilder);
@@ -122,6 +128,7 @@ const secureRoutes: SecureRoute[] = [
     new SecureRoute(manageUsersBuilder),
     new SecureRoute(changePermissionsBuilder),
     new SecureRoute(changePasswordBuilder),
+    new SecureRoute(deletePendingMember),
 ];
 
 routeManager.addInsecureRoutes(insecureRoutes);
