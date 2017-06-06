@@ -2,6 +2,8 @@ import * as express from 'express';
 import * as security from './security';
 import Maybe from './maybe';
 import { unauthorizedError, AuthToken, PermissionLevel } from './requestUtils';
+import DB from '../db/db';
+import Logger from './logger';
 
 type InsecureContinuation = (req: express.Request,
                              res: express.Response) => void;
@@ -17,6 +19,7 @@ export enum HttpMethod {
 };
 
 export class RouteManager {
+    private readonly log = new Logger('route-manager');
     constructor(private readonly app: express.Express, private readonly loginRoute: string) {
     }
 
@@ -54,8 +57,9 @@ export class RouteManager {
         let method: (string: any, ExpressContinuation: any) => void = this.determineMethod(route.httpMethod);
 
         method(route.route, (req: any, res: any) => {
-            const headerValue: string = req.headers['x-wmfo-auth'];
-            const authTokenResult: Maybe<AuthToken> = security.parseHeaderValue(headerValue);
+            const authHeaderValue: string = req.headers['x-wmfo-auth'];
+            const apiKey: string = req.headers['x-wmfo-api'];
+            const authTokenResult: Maybe<AuthToken> = security.parseHeaderValue(authHeaderValue);
             const unauthorizedCont = () => {
                 if (!route.isAjax) {
                     res.redirect(this.loginRoute);
@@ -67,6 +71,7 @@ export class RouteManager {
             authTokenResult.caseOf({
                 just: async (token: AuthToken) => {
                     if (!security.validateAuthToken(token)) {
+                        this.log.INFO(token.email, 'has expired auth token');
                         unauthorizedCont();
                     } else {
                         const hasPermission: boolean = token.permissionLevels.reduce((acc, permissionLevel) => {
@@ -74,14 +79,26 @@ export class RouteManager {
                         }, false);
 
                         if (hasPermission || token.permissionLevels.indexOf('WEBMASTER') !== -1) {
+                            this.log.INFO(token.email, 'authorized for', route.route);
                             route.cont(req, res, token);
                         } else {
+                            this.log.INFO(token.email, 'does not have permission for', route.route);
                             unauthorizedCont();
                         }
                     }
                 },
                 nothing: async () => {
                     unauthorizedCont();
+                    if (route.isAjax && apiKey != null) {
+                        DB.getInstance().exec.getAPIKeys()
+                            .then((keys: { appName: string, key: string }[]) => {
+                                const keyObj = keys.find((keyEntry) => keyEntry.key === apiKey);
+                                if (keyObj !== null) {
+                                    this.log.INFO(keyObj.appName, 'authorized for', route.route);
+                                    route;
+                                }
+                            });
+                    }
                 }
             });
         });
