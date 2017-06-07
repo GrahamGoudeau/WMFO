@@ -277,6 +277,7 @@ class ExecBoardManagement extends ActionManagement {
         getAllUserInfo: QueryFile,
         deleteAllPermissions: QueryFile,
         deletePendingMember: QueryFile,
+        toggleMemberActive: QueryFile,
     };
     protected readonly columnSets: {
         addPendingMembers: pgpLib.ColumnSet,
@@ -296,6 +297,7 @@ class ExecBoardManagement extends ActionManagement {
             getAllUserInfo: this.buildSql('queries/getAllUserInfo.sql'),
             deleteAllPermissions: this.buildSql('queries/deleteAllPermissions.sql'),
             deletePendingMember: this.buildSql('queries/deletePendingMember.sql'),
+            toggleMemberActive: this.buildSql('queries/toggleMemberActive.sql'),
         };
         this.columnSets = {
             addPendingMembers: this.buildColumnSet(['email'], 'pending_community_members_t'),
@@ -327,6 +329,10 @@ class ExecBoardManagement extends ActionManagement {
                     return t.none(this.pgp.helpers.insert(insertValues, this.columnSets.changePermissions));
                 });
         });
+    }
+
+    async toggleMemberActive(id: number): Promise<boolean> {
+        return this.db.one(this.queries.toggleMemberActive, [id], (a: { active: boolean }) => a.active);
     }
 
     async addPendingMembers(pendingMembers: PendingCommunityMember[]): DBAsyncResult<{ email: string, code: string }[]> {

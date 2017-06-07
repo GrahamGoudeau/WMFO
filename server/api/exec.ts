@@ -50,6 +50,37 @@ export async function handleDeletePendingMember(req: express.Request,
     successResponse(res);
 }
 
+export async function handleToggleMemberActive(req: express.Request,
+                                               res: express.Response,
+                                               authToken: AuthToken): Promise<void> {
+    if (!req.body) {
+        badRequest(res);
+        return;
+    }
+
+    const body: { communityMemberId: number } = req.body;
+    try {
+        body.communityMemberId = parseInt(body.communityMemberId as any);
+    } catch (e) {
+        badRequest(res);
+    }
+
+    if (!validateKeys(body, { communityMemberId: COMMON_FIELD_SHAPES.nonnegativeNum })) {
+        badRequest(res);
+        return;
+    }
+
+    try {
+        const active: boolean = await db.exec.toggleMemberActive(body.communityMemberId);
+        log.INFO(authToken.email, 'set user id', body.communityMemberId, 'to active =', active);
+        jsonResponse(res, { active: active });
+    } catch (e) {
+        log.ERROR('could not toggle member', body.communityMemberId, 'active', e);
+        badRequest(res, 'DB_ERROR');
+        return;
+    }
+}
+
 export async function handleChangePermissions(req: express.Request,
                                               res: express.Response,
                                               authToken: AuthToken): Promise<void> {
