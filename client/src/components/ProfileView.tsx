@@ -15,6 +15,7 @@ interface ProfileViewState {
     lastName: string;
     editLastName: string;
     permissionLevels: PermissionLevel[];
+    active: boolean;
 }
 
 interface ProfileViewProps {
@@ -123,6 +124,7 @@ export class ProfileView extends FormComponent<ProfileViewProps, ProfileViewStat
             lastName: this.props.profileData.lastName,
             editLastName: this.props.profileData.lastName,
             permissionLevels: this.props.profileData.permissionLevels,
+            active: this.props.profileData.active,
         };
     }
 
@@ -132,6 +134,20 @@ export class ProfileView extends FormComponent<ProfileViewProps, ProfileViewStat
         await this.updateStateAsync('editFirstName', this.state.firstName);
         await this.updateStateAsync('editLastName', this.state.lastName);
         await this.updateStateAsync('editing', false);
+    }
+
+    private async handleToggleActive(e: any) {
+        e.preventDefault();
+        try {
+            const res = await WMFORequest.getInstance().POST('/api/exec/toggleMemberActive', {
+                communityMemberId: this.props.profileData.id
+            });
+            await this.updateStateAsync('active', res.data.active);
+            this.props.onUpdate(Object.assign({}, this.props.profileData, { active: res.data.active }));
+        } catch (e) {
+            alert('Could not toggle user\'s active state.');
+            console.log('exc:', e);
+        }
     }
 
     // TODO: edit email
@@ -203,6 +219,7 @@ export class ProfileView extends FormComponent<ProfileViewProps, ProfileViewStat
                 <p>Shows hosted: {allUserInfo.numShowsHosted}</p>
                 <p>Confirmed Volunteer Hours: {allUserInfo.confirmedVolunteerHours}</p>
                 {allUserInfo.pendingVolunteerHours > 0 ? (<p>Pending Volunteer Hours: {allUserInfo.pendingVolunteerHours}</p>) : null}
+                <a href="javascript:void(0)" onClick={this.handleToggleActive.bind(this)}>{this.state.active ? 'Disable user' : 'Re-enable user'}</a>
             </div>
         ) : null;
 
@@ -216,6 +233,7 @@ export class ProfileView extends FormComponent<ProfileViewProps, ProfileViewStat
                 <p>Permissions: {this.state.permissionLevels.reduce((acc: string, level: PermissionLevel) => {
                     return acc.length > 0 ? `${acc}, ${level}` : level
                 }, '')} {permissionsEdit}</p>
+                <p>Active: {this.state.active.toString()}</p>
                 {allUserDisplay}
 
                 {shouldShowControl && false ? control : null}
