@@ -102,6 +102,12 @@ const deletePendingMember: SecureRouteBuilder =
                                                EXEC_BOARD_PERMISSIONS)
     .setHttpMethod(HttpMethod.POST);
 
+const toggleMemberActive: SecureRouteBuilder =
+    <SecureRouteBuilder>new SecureRouteBuilder('/api/exec/toggleMemberActive',
+                                               Exec_api.handleToggleMemberActive,
+                                               EXEC_BOARD_PERMISSIONS)
+    .setHttpMethod(HttpMethod.POST);
+
 const loginRoute: InsecureRoute = new InsecureRoute(loginRouteBuilder);
 const registerRoute: InsecureRoute = new InsecureRoute(registerRouteBuilder);
 const logHoursRoute: SecureRoute = new SecureRoute(logHoursBuilder);
@@ -129,6 +135,7 @@ const secureRoutes: SecureRoute[] = [
     new SecureRoute(changePermissionsBuilder),
     new SecureRoute(changePasswordBuilder),
     new SecureRoute(deletePendingMember),
+    new SecureRoute(toggleMemberActive),
 ];
 
 routeManager.addInsecureRoutes(insecureRoutes);
