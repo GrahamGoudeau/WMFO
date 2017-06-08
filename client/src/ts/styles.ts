@@ -49,6 +49,7 @@ export default class WMFOStyles {
         borderRadius: "7px",
         color: "white",
         backgroundColor: BACKGROUND_GRAY,
+        cursor: "pointer",
     };
     static readonly FORM_STYLE = {
         border: `${BORDER_WIDTH} solid`,

@@ -1,8 +1,9 @@
 import * as React from "react";
-import { FormComponent } from "./Form";
+import { ErrorState, FormComponent } from "./Form";
 import Component from "./Component";
 import WMFOStyles from "../ts/styles";
 import WMFORequest from "../ts/request";
+import { Message } from "./Message";
 
 type Semester = 'FALL' | 'SPRING' | 'SUMMER';
 
@@ -144,6 +145,10 @@ interface ShowFormState {
     showName: string;
     cohosts: CohostResult[];
     times: DayTimeResult[];
+    message: string;
+    showNameError: boolean;
+    timesError: boolean;
+    requestSent: boolean;
 }
 
 export class ShowForm extends FormComponent<{}, ShowFormState> {
@@ -157,7 +162,68 @@ export class ShowForm extends FormComponent<{}, ShowFormState> {
             showName: "",
             cohosts: [],
             times: [],
+            message: "",
+            showNameError: false,
+            timesError: false,
+            requestSent: false,
         };
+    }
+
+    private errorStates: ErrorState<ShowFormState>[] = [{
+        field: "showNameError",
+        condition: (state: ShowFormState) => state.showName.length === 0
+    }, {
+        field: "timesError",
+        condition: (state: ShowFormState) => state.times.length === 0
+    }];
+
+    async handleSubmit(e: any) {
+        e.preventDefault();
+        await this.updateStateAsync("requestSent", false);
+        if (await this.errorCheck(this.state, this.errorStates)) {
+            return;
+        }
+
+        await this.updateStateAsync("requestSent", true);
+        if (!confirm(`Ready to submit a request for your show "${this.state.showName}"?`)) {
+            return;
+        }
+        try {
+            const semester = this.state.showAirsThisSemester ? this.state.thisSemester : this.state.nextSemester;
+            const data = {
+                otherRequestOwners: this.state.cohosts.map(cohost => cohost.id) || [],
+                showName: this.state.showName,
+                dayArr: this.state.times.map(time => time.day),
+                hoursArr: this.state.times.map(time => time.hour),
+                doesAlternate: this.state.doesAlternate,
+                semester: semester.semester,
+                year: semester.year,
+            };
+            const response = await WMFORequest.getInstance().POST("/api/dj/submitShowRequest", data);
+            this.updateStateAsync("message", "Your request has been submitted and will be reviewed by the WMFO exec board. Thanks!");
+
+            this.setState({
+                showAirsThisSemester: true,
+                thisSemester: this.getSemester(false),
+                nextSemester: this.getSemester(true),
+                doesAlternate: false,
+                showName: "",
+                cohosts: [],
+                times: [],
+                message: this.state.message,
+                showNameError: false,
+                timesError: false,
+                requestSent: this.state.requestSent,
+            });
+        } catch (e) {
+            const error = e.responseJSON;
+            if (error.error && error.error.message && error.error.message === "NOT_SIGNED_AGREEMENT") {
+                this.updateStateAsync("message", "Oops! Looks like one or more hosts of this show have not signed their DJ agreements. Make sure to do that first!");
+            } else {
+                console.log("exc", e);
+                this.updateStateAsync("message", "Looks like something went wrong. Try again later and let the WebMaster know if the problem continues.");
+            }
+        }
     }
 
     private getSemester(findNext: boolean): SemesterResult {
@@ -216,11 +282,12 @@ export class ShowForm extends FormComponent<{}, ShowFormState> {
             );
         });
 
-        return <form style={Object.assign({}, WMFOStyles.FORM_STYLE, { marginTop: "3%", padding: "1%", })}>
+        return <form style={Object.assign({}, WMFOStyles.FORM_STYLE, { marginTop: "3%", marginBottom: "3%", padding: "1%", })}>
             <h3>Submit Show Request</h3>
             <hr/>
             <p>Your show's name:</p>
             <input type="text" value={this.state.showName} id="showName" onChange={this.handleChange.bind(this)} placeholder="show name" style={inputStyle}/>
+            <Message showCondition={this.state.showNameError} message="Must fill in show name" style={{color: "red"}}/>
 
             <div style={questionStyle}>
                 <p>Your Show Airs In:</p>
@@ -272,7 +339,10 @@ export class ShowForm extends FormComponent<{}, ShowFormState> {
                         this.setState(this.state);
                     }}
                     onError={(e: any) => console.log('exc', e)}/>
+                <Message showCondition={this.state.timesError} message="Must have at least one preferred time" style={{color: "red"}}/>
             </div>
+            <Message showCondition={this.state.requestSent} message={this.state.message} style={{color: "red"}}/>
+            <button style={WMFOStyles.BUTTON_STYLE} onClick={this.handleSubmit.bind(this)}>Submit Request</button>
         </form>;
     }
 };
