@@ -16,13 +16,87 @@ interface CohostResult {
     id: number;
 }
 
+interface AddDayTimesProps {
+    onSuccess: (newDayTime: DayTimeResult) => void;
+    onError: (e: any) => void;
+}
+
+interface AddDayTimesState {
+    hour: number,
+    day: string,
+}
+
+class AddDayTimes extends Component<AddDayTimesProps, AddDayTimesState> {
+    constructor(props: AddDayTimesProps) {
+        super(props);
+        this.state = {
+            hour: 0,
+            day: "SUNDAY",
+        };
+    }
+
+    render() {
+        const inputStyle = Object.assign({}, WMFOStyles.TEXT_INPUT_STYLE, {
+            marginTop: 0,
+            margin: "0 0 0 0",
+            display: "inline-block",
+            width: "5%",
+        });
+        return <div>
+            <select style={{display: "inline-block"}} value={this.state.hour} onChange={(e: any) => {
+                this.updateStateAsync("hour", parseInt(e.target.value));
+            }}>
+                <option value="0">Midnight</option>
+                <option value="1">1:00 AM</option>
+                <option value="2">2:00 AM</option>
+                <option value="3">3:00 AM</option>
+                <option value="4">4:00 AM</option>
+                <option value="5">5:00 AM</option>
+                <option value="6">6:00 AM</option>
+                <option value="7">7:00 AM</option>
+                <option value="8">8:00 AM</option>
+                <option value="9">9:00 AM</option>
+                <option value="10">10:00 AM</option>
+                <option value="11">11:00 AM</option>
+                <option value="12">Noon</option>
+                <option value="13">1:00 PM</option>
+                <option value="14">2:00 PM</option>
+                <option value="15">3:00 PM</option>
+                <option value="16">4:00 PM</option>
+                <option value="17">5:00 PM</option>
+                <option value="18">6:00 PM</option>
+                <option value="19">7:00 PM</option>
+                <option value="20">8:00 PM</option>
+                <option value="21">9:00 PM</option>
+                <option value="22">10:00 PM</option>
+                <option value="23">11:00 PM</option>
+            </select>
+            <select style={{display: "inline-block"}} value={this.state.day} onChange={(e: any) => { console.log(e.target.value); this.updateStateAsync("day", e.target.value)}}>
+                <option>SUNDAY</option>
+                <option>MONDAY</option>
+                <option>TUESDAY</option>
+                <option>WEDNESDAY</option>
+                <option>THURSDAY</option>
+                <option>FRIDAY</option>
+                <option>SATURDAY</option>
+            </select>
+            <a href="javascript:void(0)" style={{display: "inline-block"}} onClick={(e: any) => this.props.onSuccess({ day: this.state.day, hour: this.state.hour })}>Save</a>
+        </div>;
+    }
+}
+
 interface AddCohostProps {
     onSuccess: (newCohost: CohostResult) => void;
-    onError: () => void;
+    onError: (e: any) => void;
 }
 
 interface AddCohostState {
     email: string;
+}
+
+interface DayTimeResult {
+    hour: number;
+    day: string;
 }
 
 class AddCohost extends Component<AddCohostProps, AddCohostState> {
@@ -45,7 +119,7 @@ class AddCohost extends Component<AddCohostProps, AddCohostState> {
             });
             this.props.onSuccess({ email: email, id: response.data.id });
         } catch (e) {
-            alert(`Oops, looks like we couldn't add ${this.state.email} right now- make sure you've spelled it right and that you've used the right email!`);
+            this.props.onError(e);
         }
     }
 
@@ -56,7 +130,7 @@ class AddCohost extends Component<AddCohostProps, AddCohostState> {
             display: "inline-block",
         });
         return <div>
-            <input value={this.state.email} type="email" style={inputStyle} onChange={(e: any) => this.updateStateAsync("email", e.target.value)}/>
+            <input placeholder="new cohost email" value={this.state.email} type="email" style={inputStyle} onChange={(e: any) => this.updateStateAsync("email", e.target.value)}/>
             <a href="javascript:void(0)" onClick={this.handleAdd.bind(this)}>Add</a>
         </div>;
     }
@@ -69,6 +143,7 @@ interface ShowFormState {
     nextSemester: SemesterResult;
     showName: string;
     cohosts: CohostResult[];
+    times: DayTimeResult[];
 }
 
 export class ShowForm extends FormComponent<{}, ShowFormState> {
@@ -81,6 +156,7 @@ export class ShowForm extends FormComponent<{}, ShowFormState> {
             doesAlternate: false,
             showName: "",
             cohosts: [],
+            times: [],
         };
     }
 
@@ -125,7 +201,17 @@ export class ShowForm extends FormComponent<{}, ShowFormState> {
         const cohostList = this.state.cohosts.map((cohost: CohostResult) => {
             return (
                 <li style={listItemStyle}>
-                    {cohost.email} <a href="javascript:void(0)" onClick={_ => this.updateStateAsync("cohosts", this.state.cohosts.filter(host => host.email !== cohost.email))}>Remove</a>
+                    {cohost.email}
+                    <a href="javascript:void(0)" onClick={_ => this.updateStateAsync("cohosts", this.state.cohosts.filter(host => host.email !== cohost.email))}>Remove</a>
+                </li>
+            );
+        });
+
+        const dayTimeList = this.state.times.map((dayTime: DayTimeResult) => {
+            return (
+                <li style={listItemStyle}>
+                    {`${dayTime.hour % 12 > 0 ? dayTime.hour % 12 : 12}:00 ${dayTime.hour >= 12 ? 'PM' : 'AM'}, ${dayTime.day}`}
+                    <a href="javascript:void(0)" onClick={(e: any) => this.updateStateAsync("times", this.state.times.filter(time => time.hour !== dayTime.hour || time.day !== dayTime.day))}>Remove</a>
                 </li>
             );
         });
@@ -133,8 +219,8 @@ export class ShowForm extends FormComponent<{}, ShowFormState> {
         return <form style={Object.assign({}, WMFOStyles.FORM_STYLE, { marginTop: "3%", padding: "1%", })}>
             <h3>Submit Show Request</h3>
             <hr/>
-            <p>Show Name:</p>
-            <input type="text" value={this.state.showName} id="showName" onChange={this.handleChange.bind(this)} style={inputStyle}/>
+            <p>Your show's name:</p>
+            <input type="text" value={this.state.showName} id="showName" onChange={this.handleChange.bind(this)} placeholder="show name" style={inputStyle}/>
 
             <div style={questionStyle}>
                 <p>Your Show Airs In:</p>
@@ -157,17 +243,35 @@ export class ShowForm extends FormComponent<{}, ShowFormState> {
                     <input type="radio" checked={this.state.doesAlternate} style={checkboxStyle}/> DOES alternate weeks
                 </p>
             </div>
+
             <div style={questionStyle}>
-                <p>Your cohosts:</p>
+                <p>Your cohosts' emails (leave blank if none):</p>
                 <ul>
                     {cohostList}
                 </ul>
                 <AddCohost
                     onSuccess={newHost => {
                         this.state.cohosts.push(newHost);
-                        this.updateStateAsync("cohosts", this.state.cohosts);
+                        this.setState(this.state);
                     }}
-                    onError={() => console.log('err')}/>
+                    onError={(_: any) => alert(`Looks like we couldn't find that user. Make sure you're using the right email!`)}/>
+            </div>
+
+            <div style={questionStyle}>
+                <p>Your preferred days/times: ({this.state.times.length} out of a max of 15)</p>
+                <ul>
+                    {dayTimeList}
+                </ul>
+                <AddDayTimes
+                    onSuccess={newDayTime => {
+                        if (this.state.times.length >= 15) {
+                            alert("You've hit your limit for day/time preferences");
+                            return;
+                        }
+                        this.state.times.push(newDayTime);
+                        this.setState(this.state);
+                    }}
+                    onError={(e: any) => console.log('exc', e)}/>
             </div>
         </form>;
     }
