@@ -95,7 +95,7 @@ class App extends React.Component<{}, AppState> {
             }
         });
         const navbar = (
-            <ul style={WMFOStyles.NAVBAR_STYLE}>
+            <ul className="navbar" style={WMFOStyles.NAVBAR_STYLE}>
                 <NavbarLi><Link to="/">{AuthState.getInstance().getState().isJust() ? 'Home' : 'Log In'}</Link></NavbarLi>
                 {navbarInternals}
             </ul>

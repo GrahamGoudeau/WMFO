@@ -23,7 +23,7 @@ form {
 }
 */
 
-ul {
+ul.navbar {
 	font-family: "Avenir";
     list-style-type: none;
     margin: 0;
@@ -35,11 +35,11 @@ ul {
     border-radius: 7px;
 }
 
-li {
+ul.navbar li {
     float: left;
 }
 
-li a {
+ul.navbar li a {
     display: block;
     color: #666;
     text-align: left;
@@ -48,11 +48,11 @@ li a {
     position: relative;
 }
 
-li a:hover:not(.active) {
+ul.navbar li a:hover:not(.active) {
     background-color: #ddd;
 }
 
-li a.active {
+ul.navbar li a.active {
     color: white;
     background-color: grey;
 }
