@@ -54,8 +54,22 @@ export type ResponseMessage =
     'UNAUTHORIZED' |
     'ACCOUNT_DEACTIVATED' |
     'NOT_SIGNED_AGREEMENT' |
+    'BAD_ARRAY_LENGTH' |
     'NOT_FOUND';
 
+export type DayOfWeek =
+    'MONDAY' |
+    'TUESDAY' |
+    'WEDNESDAY' |
+    'THURSDAY' |
+    'FRIDAY' |
+    'SATURDAY' |
+    'SUNDAY';
+
+export type Semester =
+    'FALL' |
+    'SPRING' |
+    'SUMMER';
 
 export interface AuthToken {
     email: string,
@@ -89,6 +103,11 @@ function buildWMFOError(message: ResponseMessage, error?: any): WMFOResponse {
 export function badRequest(res: express.Response, message?: ResponseMessage, error?: any): void {
     const response: WMFOResponse = buildWMFOError(defaults(message, 'BAD_REQUEST'), error);
 
+    res.status(400).json(response);
+}
+
+export function badJson(res: express.Response, data?: any): void {
+    const response: WMFOResponse = buildWMFOError(defaults(data, {}));
     res.status(400).json(response);
 }
 
