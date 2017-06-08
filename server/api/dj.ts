@@ -75,6 +75,20 @@ export async function handleSubmitShowRequest(req: express.Request,
         return;
     }
 
+    try {
+        body.year = parseInt(body.year as any);
+        if (body.otherRequestOwners) {
+            body.otherRequestOwners = body.otherRequestOwners.map((x: any) => parseInt(x));
+        } else {
+            body.otherRequestOwners = [];
+        }
+        body.hoursArr = body.hoursArr.map((x: any) => parseInt(x));
+        body.doesAlternate = JSON.parse(body.doesAlternate as any);
+    } catch (e) {
+        badRequest(res);
+        return;
+    }
+
     if (!validateKeys(body, {
             otherRequestOwners: { type: 'object', validation: [<T>(arr: T[]) => Array.isArray(arr)] },
             showName: COMMON_FIELD_SHAPES.nonemptyString,
@@ -87,10 +101,12 @@ export async function handleSubmitShowRequest(req: express.Request,
         return;
     }
 
-    if (body.dayArr.length > 15 || body.hoursArr.length > 15) {
+    if (body.dayArr.length > 15 || body.hoursArr.length > 15 || body.dayArr.length !== body.hoursArr.length) {
         badRequest(res, 'BAD_ARRAY_LENGTH');
         return;
     }
+
+    //TODO: make sure array of days and hours are okay
 
     const requestOwners: number[] = body.otherRequestOwners.concat([authToken.id]);
 
@@ -111,6 +127,7 @@ export async function handleSubmitShowRequest(req: express.Request,
         badRequest(res);
         return;
     }
+    log.INFO(authToken.email, 'submitted a show request for "', body.showName, '"');
     successResponse(res);
 }
 export async function handleGetVolunteerHours(req: express.Request,
