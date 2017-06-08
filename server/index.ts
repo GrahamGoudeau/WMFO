@@ -108,6 +108,18 @@ const toggleMemberActive: SecureRouteBuilder =
                                                EXEC_BOARD_PERMISSIONS)
     .setHttpMethod(HttpMethod.POST);
 
+const submitShowRequest: SecureRouteBuilder =
+    <SecureRouteBuilder>new SecureRouteBuilder('/api/dj/submitShowRequest',
+                                               DJ_api.handleSubmitShowRequest,
+                                               DJ_PERMISSIONS)
+    .setHttpMethod(HttpMethod.POST);
+
+const getIdFromEmail: SecureRouteBuilder =
+    <SecureRouteBuilder>new SecureRouteBuilder('/api/dj/getIdFromEmail',
+                                               DJ_api.handleGetIdFromEmail,
+                                               DJ_PERMISSIONS)
+    .setHttpMethod(HttpMethod.POST);
+
 const loginRoute: InsecureRoute = new InsecureRoute(loginRouteBuilder);
 const registerRoute: InsecureRoute = new InsecureRoute(registerRouteBuilder);
 const logHoursRoute: SecureRoute = new SecureRoute(logHoursBuilder);
@@ -136,6 +148,8 @@ const secureRoutes: SecureRoute[] = [
     new SecureRoute(changePasswordBuilder),
     new SecureRoute(deletePendingMember),
     new SecureRoute(toggleMemberActive),
+    new SecureRoute(submitShowRequest),
+    new SecureRoute(getIdFromEmail),
 ];
 
 routeManager.addInsecureRoutes(insecureRoutes);

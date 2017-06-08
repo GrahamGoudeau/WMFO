@@ -6,7 +6,7 @@ import Maybe from '../utils/maybe';
 import Either from '../utils/either';
 import * as path from 'path';
 import { HashedPassword, HTMLEscapedString } from '../utils/functionalUtils';
-import { PermissionLevel, ResponseMessage } from '../utils/requestUtils';
+import { DayOfWeek, Semester, PermissionLevel, ResponseMessage } from '../utils/requestUtils';
 
 const CONFIG: Config = Config.getInstance();
 
@@ -106,9 +106,13 @@ class DJManagement extends ActionManagement {
         getVolunteerHours: QueryFile,
         changePassword: QueryFile,
         checkIfPendingMemberIsValid: QueryFile,
+        submitShowRequest: QueryFile,
+        findMembersProhibitedFromRequestingShow: QueryFile,
+        getIdFromEmail: QueryFile,
     };
     protected readonly columnSets: {
         addManyPermissions: pgpLib.ColumnSet,
+        addShowRequestOwners: pgpLib.ColumnSet,
     };
 
     constructor(protected readonly pgp: pgpLib.IMain, protected readonly db: pgpLib.IDatabase<any>) {
@@ -128,15 +132,44 @@ class DJManagement extends ActionManagement {
             getVolunteerHours: this.buildSql('queries/getVolunteerHours.sql'),
             changePassword: this.buildSql('queries/changePassword.sql'),
             checkIfPendingMemberIsValid: this.buildSql('queries/checkIfPendingMemberIsValid.sql'),
+            submitShowRequest: this.buildSql('queries/submitShowRequest.sql'),
+            findMembersProhibitedFromRequestingShow: this.buildSql('queries/findMembersProhibitedFromRequestingShow.sql'),
+            getIdFromEmail: this.buildSql('queries/getIdFromEmail.sql'),
         };
         this.columnSets = {
             addManyPermissions: this.buildColumnSet(['community_member_id', 'permission_level'], 'permission_level_t'),
+            addShowRequestOwners: this.buildColumnSet(['dj_id', 'show_request_id'], 'show_request_owner_relation_t'),
         };
 
     }
 
     async changePassword(communityMemberId: number, newPasswordHash: HashedPassword): Promise<void> {
         await this.db.none(this.queries.changePassword, [newPasswordHash.value, communityMemberId]);
+    }
+
+    async getIdFromEmail(email: string): Promise<number> {
+        return await this.db.one(this.queries.getIdFromEmail, [email], (a: { id: number }) => +a.id);
+    }
+
+    async submitShowRequest(requestOwners: number[], showName: string, dayArr: DayOfWeek[], hoursArr: number[], doesAlternate: boolean, sem: Semester, year: number): Promise<void> {
+        await this.db.tx(async t => {
+            return t.any(this.queries.findMembersProhibitedFromRequestingShow, [requestOwners])
+                .then((ids: number[]) => {
+                    if (ids.length > 0) {
+                        throw new Error('prohibited members');
+                    }
+                    return t.one(this.queries.submitShowRequest, [showName, dayArr, hoursArr, doesAlternate, sem, year], (a: { id: number }) => +a.id);
+                })
+                .then((requestId: number) => {
+                    const insertInfo = requestOwners.map((ownerId: number) => {
+                        return {
+                            dj_id: ownerId,
+                            show_request_id: requestId
+                        };
+                    });
+                    return t.none(this.pgp.helpers.insert(insertInfo, this.columnSets.addShowRequestOwners));
+                });
+        });
     }
 
     async getPermissionLevels(communityMemberId: number): Promise<PermissionLevel[]> {
