@@ -5,6 +5,7 @@ import { VolunteerHours, CommunityMemberRecord, DBResult } from '../db/db';
 import { HTMLEscapedString, COMMON_FIELD_SHAPES, validateKeys } from '../utils/functionalUtils';
 import { badJson, Semester, DayOfWeek, AuthToken, PermissionLevel, ResponseMessage, badRequest, jsonResponse, successResponse } from '../utils/requestUtils';
 import { buildAuthToken, hashPassword } from '../utils/security';
+import { Emailer } from "../utils/emailer";
 
 const log: Logger = new Logger('dj-api');
 const db: DB = DB.getInstance();
@@ -128,6 +129,15 @@ export async function handleSubmitShowRequest(req: express.Request,
         return;
     }
     log.INFO(authToken.email, 'submitted a show request for "', body.showName, '"');
+
+    // fire off emails
+    db.dj.findEmailsByIds(requestOwners)
+        .then(emails => Emailer.getInstance().showRequestSubmission(emails, new HTMLEscapedString(body.showName)))
+        .then((_: any) => log.INFO('Sent notification to owners of', body.showName))
+        .catch(e => {
+            log.ERROR('failed to notify', authToken.email, 'and other owners of show request "', body.showName, '" by email', e);
+        });
+
     successResponse(res);
 }
 export async function handleGetVolunteerHours(req: express.Request,

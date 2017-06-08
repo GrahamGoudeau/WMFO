@@ -109,6 +109,7 @@ class DJManagement extends ActionManagement {
         submitShowRequest: QueryFile,
         findMembersProhibitedFromRequestingShow: QueryFile,
         getIdFromEmail: QueryFile,
+        findEmailsByIds: QueryFile,
     };
     protected readonly columnSets: {
         addManyPermissions: pgpLib.ColumnSet,
@@ -135,6 +136,7 @@ class DJManagement extends ActionManagement {
             submitShowRequest: this.buildSql('queries/submitShowRequest.sql'),
             findMembersProhibitedFromRequestingShow: this.buildSql('queries/findMembersProhibitedFromRequestingShow.sql'),
             getIdFromEmail: this.buildSql('queries/getIdFromEmail.sql'),
+            findEmailsByIds: this.buildSql('queries/findEmailsByIds.sql'),
         };
         this.columnSets = {
             addManyPermissions: this.buildColumnSet(['community_member_id', 'permission_level'], 'permission_level_t'),
@@ -191,6 +193,10 @@ class DJManagement extends ActionManagement {
             };
             return hours;
         });
+    }
+
+    async findEmailsByIds(ids: number[]): Promise<string[]> {
+        return await this.db.map(this.queries.findEmailsByIds, [ids], (record: { email: string }) => record.email);
     }
 
     async getSingleUnconfirmedAccount(code: string): DBAsyncResult<PendingCommunityMember> {
