@@ -22,7 +22,8 @@ CREATE TYPE day_of_week_e AS ENUM (
 
 CREATE TYPE semester_e AS ENUM (
     'FALL',
-    'SPRING'
+    'SPRING',
+    'SUMMER'
 );
 
 /* show forms between agreement posted and due date we set */
