@@ -96,7 +96,7 @@ export async function handleSubmitShowRequest(req: express.Request,
 
     try {
         await db.dj.submitShowRequest(requestOwners,
-                                      body.showName,
+                                      new HTMLEscapedString(body.showName),
                                       body.dayArr,
                                       body.hoursArr,
                                       body.doesAlternate,

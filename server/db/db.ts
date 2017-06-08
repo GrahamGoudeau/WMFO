@@ -151,14 +151,14 @@ class DJManagement extends ActionManagement {
         return await this.db.one(this.queries.getIdFromEmail, [email], (a: { id: number }) => +a.id);
     }
 
-    async submitShowRequest(requestOwners: number[], showName: string, dayArr: DayOfWeek[], hoursArr: number[], doesAlternate: boolean, sem: Semester, year: number): Promise<void> {
+    async submitShowRequest(requestOwners: number[], showName: HTMLEscapedString, dayArr: DayOfWeek[], hoursArr: number[], doesAlternate: boolean, sem: Semester, year: number): Promise<void> {
         await this.db.tx(async t => {
             return t.any(this.queries.findMembersProhibitedFromRequestingShow, [requestOwners])
                 .then((ids: number[]) => {
                     if (ids.length > 0) {
                         throw new Error('prohibited members');
                     }
-                    return t.one(this.queries.submitShowRequest, [showName, dayArr, hoursArr, doesAlternate, sem, year], (a: { id: number }) => +a.id);
+                    return t.one(this.queries.submitShowRequest, [showName.value, dayArr, hoursArr, doesAlternate, sem, year], (a: { id: number }) => +a.id);
                 })
                 .then((requestId: number) => {
                     const insertInfo = requestOwners.map((ownerId: number) => {
