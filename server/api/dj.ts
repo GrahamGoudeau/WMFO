@@ -27,7 +27,7 @@ export async function handleLogHours(req: express.Request,
     }
     try {
         await db.dj.logVolunteerHours(new Date(body.volunteerDate), body.numHours, new HTMLEscapedString(body.description), authToken.id);
-        log.INFO('User', authToken.email, 'reporting', body.numHours, 'of volunteer hours');
+        log.INFO(authToken.email, 'reporting', body.numHours, 'of volunteer hours');
         successResponse(res);
     } catch (e) {
         log.ERROR('exception while logging volunteer hours from', authToken.email);
@@ -145,7 +145,7 @@ export async function handleGetVolunteerHours(req: express.Request,
                                               authToken: AuthToken): Promise<void> {
     try {
         const data: VolunteerHours[] = await db.dj.getVolunteerHours(authToken.id);
-        log.INFO('User', authToken.email, 'requesting their volunteer hours');
+        log.INFO(authToken.email, 'requesting their volunteer hours');
         jsonResponse(res, data);
     } catch (e) {
         log.ERROR('exception while retrieving volunteer hours for', authToken.email);
