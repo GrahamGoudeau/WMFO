@@ -3,6 +3,7 @@ import Maybe from "../ts/maybe";
 import { PermissionLevel, AuthState, CommunityMemberRecord } from "../ts/authState";
 import Component from "./Component";
 import WMFORequest from "../ts/request";
+import WMFOStyles from "../ts/styles";
 import { browserHistory } from "react-router";
 
 interface PendingCommunityMember {
@@ -79,15 +80,6 @@ export default class PendingMembers extends Component<{}, PendingMembersState> {
             const cellStyle = {
                 paddingBottom: '1%',
             };
-            const noticeStyle = {
-                color: '#333',
-                backgroundColor: '#fefefe',
-                borderRadius: '7px',
-                padding: '1%',
-                marginTop: '2%',
-                marginBottom: '1%',
-                textAlign: 'center',
-            };
             const userInfo = this.state.pendingMembers.map((member: PendingCommunityMember) => {
                 const permissionString = member.permissionLevels.reduce((acc: string, p: PermissionLevel) => {
                     return acc.length > 0 ? `${acc}, ${p}` : p
@@ -102,11 +94,11 @@ export default class PendingMembers extends Component<{}, PendingMembersState> {
                 </tr>);
             });
             const noMembersInfo = (
-                <p style={noticeStyle}>No pending members.</p>
+                <p style={WMFOStyles.BOX_STYLE}>No pending members.</p>
             );
             return userInfo.length === 0 ? noMembersInfo : (
                 <div>
-                    <p style={noticeStyle}>A pending member must visit their unique URL to set their password and finalize their info.</p>
+                    <p style={WMFOStyles.BOX_STYLE}>A pending member must visit their unique URL to set their password and finalize their info.</p>
 
                     <table style={{
                         backgroundColor: '#fefefe',
