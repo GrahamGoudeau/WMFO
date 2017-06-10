@@ -52,6 +52,7 @@ export async function handleGetIdFromEmail(req: express.Request,
 
     try {
         const id: number = await db.dj.getIdFromEmail(body.email.toLowerCase());
+        log.INFO(authToken.email, 'got id for', body.email);
         jsonResponse(res, { id: id });
     } catch (e) {
         log.ERROR('could not get by email- looking for', body.email, e);
@@ -111,9 +112,10 @@ export async function handleSubmitShowRequest(req: express.Request,
 
     const requestOwners: number[] = body.otherRequestOwners.concat([authToken.id]);
 
+    let id: number;
     try {
-        await db.dj.submitShowRequest(requestOwners,
-                                      new HTMLEscapedString(body.showName),
+        id = await db.dj.submitShowRequest(requestOwners,
+                                      body.showName,
                                       body.dayArr,
                                       body.hoursArr,
                                       body.doesAlternate,
@@ -138,8 +140,9 @@ export async function handleSubmitShowRequest(req: express.Request,
             log.ERROR('failed to notify', authToken.email, 'and other owners of show request "', body.showName, '" by email', e);
         });
 
-    successResponse(res);
+    jsonResponse(res, { requestId: id });
 }
+
 export async function handleGetVolunteerHours(req: express.Request,
                                               res: express.Response,
                                               authToken: AuthToken): Promise<void> {

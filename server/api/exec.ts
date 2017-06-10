@@ -1,9 +1,9 @@
 import * as express from 'express';
 import Logger from '../utils/logger';
 import DB from '../db/db';
-import { AllUserInfo, PendingCommunityMember, VolunteerHours, CommunityMemberRecord, DBResult } from '../db/db';
+import { Show, ShowRequest, AllUserInfo, PendingCommunityMember, VolunteerHours, CommunityMemberRecord, DBResult } from '../db/db';
 import { buildNonObjectArrayShape, KeyShape, RequestShape, validateArray, HTMLEscapedString, COMMON_FIELD_SHAPES, validateKeys } from '../utils/functionalUtils';
-import { AuthToken, PermissionLevel, ResponseMessage, badRequest, jsonResponse, successResponse } from '../utils/requestUtils';
+import { DayOfWeek, Semester, AuthToken, PermissionLevel, ResponseMessage, badRequest, jsonResponse, successResponse } from '../utils/requestUtils';
 import { buildAuthToken, hashPassword } from '../utils/security';
 import { Emailer } from "../utils/emailer";
 import Config from "../utils/config";
@@ -48,6 +48,128 @@ export async function handleDeletePendingMember(req: express.Request,
     }
     log.INFO(authToken.email, 'deleted pending member');
     successResponse(res);
+}
+
+export async function handleDeleteShow(req: express.Request,
+                                       res: express.Response,
+                                       authToken: AuthToken): Promise<void> {
+    const body: { id: number } = req.body;
+    if (!body) {
+        badRequest(res);
+        return;
+    }
+
+    try {
+        body.id = parseInt(body.id as any);
+    } catch (e) {
+        badRequest(res);
+        return;
+    }
+
+    if (!validateKeys(body, { id: COMMON_FIELD_SHAPES.nonnegativeNum })) {
+        badRequest(res);
+        return;
+    }
+    try {
+        await db.exec.deleteShow(body.id);
+    } catch (e) {
+        log.ERROR('exception deleting show', body.id, e);
+        badRequest(res, 'DB_ERROR');
+        return;
+    }
+    log.INFO(authToken.email, 'deleted show', body.id);
+    successResponse(res);
+}
+
+export async function handleDeleteShowRequest(req: express.Request,
+                                              res: express.Response,
+                                              authToken: AuthToken): Promise<void> {
+    const body: { id: number } = req.body;
+    if (!body) {
+        badRequest(res);
+        return;
+    }
+
+    try {
+        body.id = parseInt(body.id as any);
+    } catch (e) {
+        badRequest(res);
+        return;
+    }
+
+    if (!validateKeys(body, { id: COMMON_FIELD_SHAPES.nonnegativeNum })) {
+        badRequest(res);
+        return;
+    }
+    try {
+        await db.exec.deleteShowRequest(body.id);
+    } catch (e) {
+        log.ERROR('exception deleting show request', body.id, e);
+        badRequest(res, 'DB_ERROR');
+        return;
+    }
+    log.INFO(authToken.email, 'deleted show request', body.id);
+    successResponse(res);
+}
+
+export async function handleGetScheduleBySemester(req: express.Request,
+                                                  res: express.Response,
+                                                  authToken: AuthToken): Promise<void> {
+    const body: { semester: Semester, year: number } = req.body;
+    if (!body) {
+        badRequest(res);
+        return;
+    }
+    try {
+        body.year = parseInt(body.year as any);
+    } catch (e) {
+        badRequest(res);
+        return;
+    }
+
+    if (!validateKeys(body, { semester: COMMON_FIELD_SHAPES.semester, year: COMMON_FIELD_SHAPES.nonnegativeNum })) {
+        badRequest(res);
+        return;
+    }
+
+    try {
+        const result: Show[] = await db.exec.getScheduleBySemester(body.semester, body.year);
+        log.INFO(authToken.email, 'got schedule for', body.semester, body.year);
+        jsonResponse(res, { schedule: result });
+    } catch (e) {
+        log.ERROR('could not get schedule', body.semester, body.year, e);
+        badRequest(res, 'DB_ERROR');
+    }
+}
+
+export async function handleGetShowRequestsBySemester(req: express.Request,
+                                                      res: express.Response,
+                                                      authToken: AuthToken): Promise<void> {
+    const body: { semester: Semester, year: number } = req.body;
+    if (!body) {
+        badRequest(res);
+        return;
+    }
+    try {
+        body.year = parseInt(body.year as any);
+    } catch (e) {
+        badRequest(res);
+        return;
+    }
+
+    if (!validateKeys(body, { semester: COMMON_FIELD_SHAPES.semester, year: COMMON_FIELD_SHAPES.nonnegativeNum })) {
+        badRequest(res);
+        return;
+    }
+
+    try {
+        const result: ShowRequest[] = await db.exec.getShowRequestsBySemester(body.semester, body.year);
+        log.INFO(authToken.email, 'got show requests for', body.semester, body.year);
+        jsonResponse(res, { requests: result });
+    } catch (e) {
+        log.ERROR('could not get show requests for', body.semester, body.year, e);
+        badRequest(res, 'DB_ERROR');
+    }
 }
 
 export async function handleToggleMemberActive(req: express.Request,
@@ -124,6 +246,7 @@ export async function handleChangePermissions(req: express.Request,
     log.INFO(authToken.email, 'changed permissions for user', updatedPermissions.communityMemberId);
     successResponse(res);
 }
+
 export async function handleGetUnconfirmedHours(req: express.Request,
                                                 res: express.Response,
                                                 authToken: AuthToken): Promise<void> {
@@ -139,6 +262,67 @@ export async function handleGetUnconfirmedHours(req: express.Request,
     }
 }
 
+export async function handleAddShowToSchedule(req: express.Request,
+                                     res: express.Response,
+                                     authToken: AuthToken): Promise<void> {
+    const body: {
+        showName: string;
+        dayOfWeek: DayOfWeek;
+        doesAlternate: boolean;
+        hour: number;
+        semester: Semester;
+        year: number;
+        communityMemberEmails: string[];
+        communityMemberIds: number[];
+        requestId: number;
+    } = req.body;
+
+    if (!body) {
+        badRequest(res);
+        return;
+    }
+
+    try {
+        body.doesAlternate = JSON.parse(body.doesAlternate as any);
+        body.hour = parseInt(body.hour as any);
+        body.year = parseInt(body.year as any);
+        body.communityMemberIds = body.communityMemberIds.map(id => parseInt(id as any));
+        body.requestId = parseInt(body.requestId as any);
+        body.showName = new HTMLEscapedString(body.showName).value;
+    } catch (e) {
+        badRequest(res);
+        return;
+    }
+
+    if (!validateKeys(body, {
+            showName: COMMON_FIELD_SHAPES.nonemptyString,
+            dayOfWeek: COMMON_FIELD_SHAPES.dayOfWeek,
+            doesAlternate: COMMON_FIELD_SHAPES.boolean,
+            hour: COMMON_FIELD_SHAPES.nonnegativeNum,
+            semester: COMMON_FIELD_SHAPES.semester,
+            year: COMMON_FIELD_SHAPES.nonnegativeNum,
+            communityMemberEmails: COMMON_FIELD_SHAPES.nonemptyArray,
+            communityMemberIds: COMMON_FIELD_SHAPES.nonemptyArray,
+            requestId: COMMON_FIELD_SHAPES.nonnegativeNum,
+        })) {
+        badRequest(res);
+        return;
+    }
+
+    try {
+        const id: number = await db.exec.addShowToSchedule(Object.assign({}, body, { id: null }), body.requestId);
+        jsonResponse(res, { showId: id });
+        return;
+    } catch (e) {
+        if (e.message && e.message === 'already scheduled') {
+            badRequest(res);
+            return;
+        }
+        log.ERROR('failed to add show to schedule', e, e.message);
+        badRequest(res, 'DB_ERROR');
+        return;
+    }
+}
 export async function handleManageUsers(req: express.Request,
                                         res: express.Response,
                                         authToken: AuthToken): Promise<void> {
@@ -205,7 +389,7 @@ export async function handleAddPendingMembers(req: express.Request,
         badRequest(res);
         return;
     }
-    const result: DBResult<{ email: string, code: string }[]> = await db.exec.addPendingMembers(arr.map((entry) => { 
+    const result: DBResult<{ email: string, code: string }[]> = await db.exec.addPendingMembers(arr.map((entry) => {
         return {
             email: entry.email.toLowerCase(),
             permissionLevels: entry.permissionLevels

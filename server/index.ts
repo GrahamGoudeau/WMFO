@@ -120,6 +120,36 @@ const getIdFromEmail: SecureRouteBuilder =
                                                DJ_PERMISSIONS)
     .setHttpMethod(HttpMethod.POST);
 
+const getShowRequestsBySemester: SecureRouteBuilder =
+    <SecureRouteBuilder>new SecureRouteBuilder('/api/exec/getShowRequestsBySemester',
+                                               Exec_api.handleGetShowRequestsBySemester,
+                                               EXEC_BOARD_PERMISSIONS)
+    .setHttpMethod(HttpMethod.POST);
+
+const getScheduleBySemester: SecureRouteBuilder =
+    <SecureRouteBuilder>new SecureRouteBuilder('/api/exec/getScheduleBySemester',
+                                               Exec_api.handleGetScheduleBySemester,
+                                               EXEC_BOARD_PERMISSIONS)
+    .setHttpMethod(HttpMethod.POST);
+
+const addShowToSchedule: SecureRouteBuilder =
+    <SecureRouteBuilder>new SecureRouteBuilder('/api/exec/addShowToSchedule',
+                                               Exec_api.handleAddShowToSchedule,
+                                               EXEC_BOARD_PERMISSIONS)
+    .setHttpMethod(HttpMethod.POST);
+
+const deleteShow: SecureRouteBuilder =
+    <SecureRouteBuilder>new SecureRouteBuilder('/api/exec/deleteShow',
+                                               Exec_api.handleDeleteShow,
+                                               EXEC_BOARD_PERMISSIONS)
+    .setHttpMethod(HttpMethod.POST);
+
+const deleteShowRequest: SecureRouteBuilder =
+    <SecureRouteBuilder>new SecureRouteBuilder('/api/exec/deleteShowRequest',
+                                               Exec_api.handleDeleteShowRequest,
+                                               EXEC_BOARD_PERMISSIONS)
+    .setHttpMethod(HttpMethod.POST);
+
 const loginRoute: InsecureRoute = new InsecureRoute(loginRouteBuilder);
 const registerRoute: InsecureRoute = new InsecureRoute(registerRouteBuilder);
 const logHoursRoute: SecureRoute = new SecureRoute(logHoursBuilder);
@@ -150,6 +180,11 @@ const secureRoutes: SecureRoute[] = [
     new SecureRoute(toggleMemberActive),
     new SecureRoute(submitShowRequest),
     new SecureRoute(getIdFromEmail),
+    new SecureRoute(getShowRequestsBySemester),
+    new SecureRoute(getScheduleBySemester),
+    new SecureRoute(addShowToSchedule),
+    new SecureRoute(deleteShow),
+    new SecureRoute(deleteShowRequest),
 ];
 
 routeManager.addInsecureRoutes(insecureRoutes);
