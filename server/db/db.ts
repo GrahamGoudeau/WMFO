@@ -76,6 +76,31 @@ export interface VolunteerHours {
     email: string;
 }
 
+export interface Show {
+    id: number;
+    showName: string;
+    dayOfWeek: DayOfWeek;
+    doesAlternate: boolean;
+    hour: number;
+    semester: Semester;
+    year: number;
+    communityMemberEmails: string[];
+    communityMemberIds: number[];
+}
+
+export interface ShowRequest {
+    id: number;
+    dateCreated: Date;
+    showName: string;
+    dayArr: DayOfWeek[];
+    hoursArr: number[];
+    doesAlternate: boolean;
+    semester: Semester;
+    year: number;
+    hostIds: number[];
+    hostEmails: string[];
+}
+
 export type DBResult<T> = Either<ResponseMessage, T>;
 export type DBAsyncResult<T> = Promise<DBResult<T>>;
 
@@ -153,15 +178,17 @@ class DJManagement extends ActionManagement {
         return await this.db.one(this.queries.getIdFromEmail, [email], (a: { id: number }) => +a.id);
     }
 
-    async submitShowRequest(requestOwners: number[], showName: HTMLEscapedString, dayArr: DayOfWeek[], hoursArr: number[], doesAlternate: boolean, sem: Semester, year: number): Promise<void> {
-        await this.db.tx(async t => {
-            return t.any(this.queries.findMembersProhibitedFromRequestingShow, [requestOwners])
+    async submitShowRequest(requestOwners: number[], showName: string, dayArr: DayOfWeek[], hoursArr: number[], doesAlternate: boolean, sem: Semester, year: number): Promise<number> {
+        const data = await this.db.tx(async t => {
+            const submitPromise = t.any(this.queries.findMembersProhibitedFromRequestingShow, [requestOwners])
                 .then((ids: number[]) => {
                     if (ids.length > 0) {
                         throw new Error('prohibited members');
                     }
-                    return t.one(this.queries.submitShowRequest, [showName.value, dayArr, hoursArr, doesAlternate, sem, year], (a: { id: number }) => +a.id);
-                })
+                    return t.one(this.queries.submitShowRequest, [showName, dayArr, hoursArr, doesAlternate, sem, year], (a: { id: number }) => +a.id);
+                });
+
+            const addOwners = submitPromise
                 .then((requestId: number) => {
                     const insertInfo = requestOwners.map((ownerId: number) => {
                         return {
@@ -171,7 +198,10 @@ class DJManagement extends ActionManagement {
                     });
                     return t.none(this.pgp.helpers.insert(insertInfo, this.columnSets.addShowRequestOwners));
                 });
+
+            return Promise.all([submitPromise, addOwners]);
         });
+        return data[0]; // the id of the show
     }
 
     async getPermissionLevels(communityMemberId: number): Promise<PermissionLevel[]> {
@@ -317,11 +347,19 @@ class ExecBoardManagement extends ActionManagement {
         deleteAllPermissions: QueryFile,
         deletePendingMember: QueryFile,
         toggleMemberActive: QueryFile,
+        getScheduleBySemester: QueryFile,
+        getShowRequestsBySemester: QueryFile,
+        deleteShowRequest: QueryFile,
+        toggleShowRequestScheduled: QueryFile,
+        createShow: QueryFile,
+        deleteShow: QueryFile,
+        createShowSchedule: QueryFile,
     };
     protected readonly columnSets: {
         addPendingMembers: pgpLib.ColumnSet,
         addPendingPermissions: pgpLib.ColumnSet,
         changePermissions: pgpLib.ColumnSet,
+        addShowOwners: pgpLib.ColumnSet,
     };
 
     constructor(protected readonly pgp: pgpLib.IMain, protected readonly db: pgpLib.IDatabase<any>) {
@@ -337,12 +375,28 @@ class ExecBoardManagement extends ActionManagement {
             deleteAllPermissions: this.buildSql('queries/deleteAllPermissions.sql'),
             deletePendingMember: this.buildSql('queries/deletePendingMember.sql'),
             toggleMemberActive: this.buildSql('queries/toggleMemberActive.sql'),
+            getScheduleBySemester: this.buildSql('queries/getScheduleBySemester.sql'),
+            getShowRequestsBySemester: this.buildSql('queries/getShowRequestsBySemester.sql'),
+            deleteShowRequest: this.buildSql('queries/deleteShowRequest.sql'),
+            toggleShowRequestScheduled: this.buildSql('queries/toggleShowRequestScheduled.sql'),
+            createShow: this.buildSql('queries/createShow.sql'),
+            createShowSchedule: this.buildSql('queries/createShowSchedule.sql'),
+            deleteShow: this.buildSql('queries/deleteShow.sql'),
         };
         this.columnSets = {
             addPendingMembers: this.buildColumnSet(['email'], 'pending_community_members_t'),
             addPendingPermissions: this.buildColumnSet(['pending_community_members_email', 'permission_level'], 'pending_members_permissions_t'),
             changePermissions: this.buildColumnSet(['community_member_id', 'permission_level'], 'permission_level_t'),
+            addShowOwners: this.buildColumnSet(['community_member_id', 'show_id'], 'show_owner_relation_t'),
         }
+    }
+
+    async deleteShow(id: number): Promise<void> {
+        await this.db.none(this.queries.deleteShow, [id]);
+    }
+
+    async deleteShowRequest(id: number): Promise<void> {
+        await this.db.none(this.queries.deleteShowRequest, [id]);
     }
 
     async deletePendingMember(code: string): Promise<void> {
@@ -370,8 +424,71 @@ class ExecBoardManagement extends ActionManagement {
         });
     }
 
+    async addShowToSchedule(newShow: Show, requestId: number): Promise<number> {
+        const data = await this.db.tx(t => {
+            const createShowPromise = t.one(this.queries.toggleShowRequestScheduled, [requestId], (a: { scheduled: boolean }) => a.scheduled)
+                .then((scheduled: boolean) => {
+                    if (!scheduled) throw new Error("already scheduled");
+                    return t.one(this.queries.createShow, [newShow.showName], (a: { id: number }) => +a.id)
+                });
+
+            const createSchedulePromise = createShowPromise.then((showId: number) =>
+                t.one(this.queries.createShowSchedule, [showId, newShow.dayOfWeek, newShow.doesAlternate, newShow.hour, newShow.semester, newShow.year], (a: { id: number }) => +a.id));
+
+            const addOwnersPromise = createShowPromise.then((showId: number) => {
+                const insertInfo = newShow.communityMemberIds.map(id => {
+                    return {
+                        community_member_id: id,
+                        show_id: showId,
+                    };
+                });
+                return t.none(this.pgp.helpers.insert(insertInfo, this.columnSets.addShowOwners));
+            });
+            return Promise.all([createShowPromise, createSchedulePromise, addOwnersPromise]);
+        });
+        return data[0];
+    }
+
     async toggleMemberActive(id: number): Promise<boolean> {
         return await this.db.one(this.queries.toggleMemberActive, [id], (a: { active: boolean }) => a.active);
+    }
+
+    async getScheduleBySemester(semester: Semester, year: number): Promise<Show[]> {
+        return await this.db.map(this.queries.getScheduleBySemester, [semester, year], (record: any) => {
+            return {
+                id: record.id,
+                showName: record.show_name,
+                dayOfWeek: record.day_of_week,
+                doesAlternate: record.does_alternate_weeks,
+                hour: record.hour,
+                semester: record.semester,
+                year: record.year,
+                communityMemberEmails: record.community_member_emails,
+                communityMemberIds: record.community_member_ids,
+            };
+        });
+    }
+
+    async getShowRequestsBySemester(semester: Semester, year: number): Promise<ShowRequest[]> {
+        return await this.db.map(this.queries.getShowRequestsBySemester, [semester, year], (record: any) => {
+            const res: ShowRequest = {
+                id: record.id,
+                dateCreated: record.date_created,
+                showName: record.show_name,
+                dayArr: record.day_of_week_requested,
+                hoursArr: record.hours_requested,
+                doesAlternate: record.does_alternate_weeks,
+                semester: record.semester_show_airs,
+                year: record.year_show_airs,
+                hostIds: record.community_member_ids,
+                hostEmails: record.community_member_emails,
+            };
+            return res;
+        });
+    }
+
+    async toggleShowRequestScheduled(id: number): Promise<boolean> {
+        return await this.db.one(this.queries.toggleShowRequestScheduled, [id], (a: { scheduled: boolean }) => a.scheduled);
     }
 
     async addPendingMembers(pendingMembers: PendingCommunityMember[]): DBAsyncResult<{ email: string, code: string }[]> {
