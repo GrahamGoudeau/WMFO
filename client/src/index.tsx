@@ -6,6 +6,7 @@ import { Home } from "./components/Home";
 import { About } from "./components/About";
 import { ShowForm } from "./components/ShowForm"
 import { ExecVolunteerReview, DJVolunteer } from "./components/Volunteer";
+import { ManageSchedule } from "./components/ManageSchedule";
 import { Contact } from "./components/Contact";
 import { Links } from "./components/Links";
 import { Unknown } from "./components/Unknown";
@@ -68,6 +69,7 @@ class App extends React.Component<{}, AppState> {
             <div>
                 <li><Link to="/add_users">Add Users</Link></li>
                 <li><Link to="/manage_users">Manage Users</Link></li>
+                <li><Link to="/manage_schedule">Manage Schedule</Link></li>
                 <li><Link to="/review_hours">Review Volunteer Hours</Link></li>
                 <li><Link to="/pending_members">Pending Members</Link></li>
             </div>
@@ -139,6 +141,7 @@ ReactDOM.render((
             <Route path="/manage_users" component={ManageUsers}/>
             <Route path="/show_form" component={ShowForm}/>
             <Route path="/volunteer_hours" component={DJVolunteer}/>
+            <Route path="/manage_schedule" component={ManageSchedule}/>
             <Route path="/review_hours" component={ExecVolunteerReview}/>
             <Route path="/contact" component={Contact}/>
             <Route path="/links" component ={Links}/>
