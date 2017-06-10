@@ -7,5 +7,5 @@
  * $6 - year show airs
  */
 INSERT INTO show_request_t
-VALUES (DEFAULT, $1, $2::day_of_week_e[], $3, $4, $5, $6)
+VALUES (DEFAULT, DEFAULT, $1, $2::day_of_week_e[], $3, $4, $5, $6, DEFAULT)
 RETURNING id;
