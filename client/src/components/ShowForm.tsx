@@ -4,13 +4,7 @@ import Component from "./Component";
 import WMFOStyles from "../ts/styles";
 import WMFORequest from "../ts/request";
 import { Message } from "./Message";
-
-type Semester = 'FALL' | 'SPRING' | 'SUMMER';
-
-interface SemesterResult {
-    semester: Semester;
-    year: number;
-}
+import { getSemesterOffset, getThisSemester, Semester, SemesterResult } from "../ts/semester";
 
 interface CohostResult {
     email: string;
@@ -156,8 +150,8 @@ export class ShowForm extends FormComponent<{}, ShowFormState> {
         super(props);
         this.state = {
             showAirsThisSemester: true,
-            thisSemester: this.getSemester(false),
-            nextSemester: this.getSemester(true),
+            thisSemester: getThisSemester(),
+            nextSemester: getSemesterOffset(getThisSemester(), 1),
             doesAlternate: false,
             showName: "",
             cohosts: [],
@@ -185,7 +179,7 @@ export class ShowForm extends FormComponent<{}, ShowFormState> {
         }
 
         await this.updateStateAsync("requestSent", true);
-        if (!confirm(`Ready to submit a request for your show "${this.state.showName}"?`)) {
+        if (!confirm(`Ready to submit a request for your show "${this.state.showName}"?  You've listed ${this.state.times.length} times that you are available. Make sure this is right!`)) {
             return;
         }
         try {
@@ -204,8 +198,8 @@ export class ShowForm extends FormComponent<{}, ShowFormState> {
 
             this.setState({
                 showAirsThisSemester: true,
-                thisSemester: this.getSemester(false),
-                nextSemester: this.getSemester(true),
+                thisSemester: getThisSemester(),
+                nextSemester: getSemesterOffset(getThisSemester(), 1),
                 doesAlternate: false,
                 showName: "",
                 cohosts: [],
@@ -224,30 +218,6 @@ export class ShowForm extends FormComponent<{}, ShowFormState> {
                 this.updateStateAsync("message", "Looks like something went wrong. Try again later and let the WebMaster know if the problem continues.");
             }
         }
-    }
-
-    private getSemester(findNext: boolean): SemesterResult {
-        const today = new Date();
-        const springSemesterBegin = 0; // January is 0
-        const summerSemesterBegin = 5;
-        const fallSemesterBegin = 8;
-
-        const thisMonth = today.getMonth();
-        const thisYear = today.getFullYear();
-
-        let semester: Semester;
-        if (thisMonth < summerSemesterBegin) {
-            semester = findNext ? "SUMMER" : "SPRING";
-        } else if (thisMonth < fallSemesterBegin) {
-            semester = findNext ? "FALL" : "SUMMER";
-        } else {
-            semester = findNext ? "SPRING" : "FALL";
-        }
-
-        return {
-            semester: semester,
-            year: thisYear
-        };
     }
 
     render() {
@@ -339,7 +309,7 @@ export class ShowForm extends FormComponent<{}, ShowFormState> {
                         this.setState(this.state);
                     }}
                     onError={(e: any) => console.log('exc', e)}/>
-                <Message showCondition={this.state.timesError} message="Must have at least one preferred time" style={{color: "red"}}/>
+                <Message showCondition={this.state.timesError} message="Must have at least one preferred time; make sure to click save!" style={{color: "red"}}/>
             </div>
             <Message showCondition={this.state.requestSent} message={this.state.message} style={{color: "red"}}/>
             <button style={WMFOStyles.BUTTON_STYLE} onClick={this.handleSubmit.bind(this)}>Submit Request</button>
