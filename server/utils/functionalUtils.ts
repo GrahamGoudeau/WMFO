@@ -59,6 +59,7 @@ export interface RequestShape {
 }
 
 export const COMMON_FIELD_SHAPES: any = {
+    boolean: { type: 'boolean', validation: [] },
     nonemptyString: { type: 'string', validation: [(s: string) => s.length > 0]},
     email: { type: 'string', validation: [
             (s: string) => s.length > 0,
@@ -71,7 +72,19 @@ export const COMMON_FIELD_SHAPES: any = {
     nonnegativeNum: { type: 'number', validation: [(n: number) => n >= 0] },
     uuid: { type: 'string', validation: [(s: string) => /^[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12}$/.test(s)] },
     permission: { type: 'string', validation: [(s: string) => isPermissionLevel(s) ] },
-    nonemptyArray: { type: 'object', validation: [<T>(arr: T[]) => arr.length > 0] },
+    nonemptyArray: { type: 'object', validation: [<T>(arr: T[]) => Array.isArray(arr), <T>(arr: T[]) => arr.length > 0] },
+    semester: { type: 'string', validation: [(s: string) =>
+        s === 'SPRING' ||
+        s === 'SUMMER' ||
+        s === 'FALL'] },
+    dayOfWeek: { type: 'string', validation: [(s: string) =>
+        s === 'SUNDAY' ||
+        s === 'MONDAY' ||
+        s === 'TUESDAY' ||
+        s === 'WEDNESDAY' ||
+        s === 'THURSDAY' ||
+        s === 'FRIDAY' ||
+        s === 'SATURDAY'] },
 };
 
 export function buildNonObjectArrayShape<T>(shape: KeyShape): KeyShape {

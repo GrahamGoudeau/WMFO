@@ -49,6 +49,7 @@ export default class WMFOStyles {
         borderRadius: "7px",
         color: "white",
         backgroundColor: BACKGROUND_GRAY,
+        cursor: "pointer",
     };
     static readonly FORM_STYLE = {
         border: `${BORDER_WIDTH} solid`,
@@ -67,5 +68,22 @@ export default class WMFOStyles {
         float: "right",
         marginTop: "2%",
         marginRight: "2%",
+    };
+    static readonly BOX_STYLE = {
+        color: '#333',
+        backgroundColor: '#fefefe',
+        borderRadius: '7px',
+        padding: '1%',
+        marginTop: '2%',
+        marginBottom: '1%',
+        textAlign: 'center',
+    };
+    static readonly TABLE_STYLE = {
+        tableLayout: "fixed",
+        backgroundColor: '#fefefe',
+        borderRadius: '7px',
+        width: '100%',
+        textAlign: 'center',
+        padding: '1%',
     };
 }

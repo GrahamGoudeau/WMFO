@@ -27,3 +27,6 @@ VALUES
     ((SELECT id FROM community_members_t WHERE email='pd@wmfo.org'), 'PROGRAMMING_DIRECTOR'),
     ((SELECT id FROM community_members_t WHERE email='ops@wmfo.org'), 'OPERATIONS_DIRECTOR')
 ;
+
+INSERT INTO agreements_t
+VALUES ('I will follow the rules laid out by WMFO and follow the policies set forth by the FCC and the WMFO station.  I understand that violation of any guidelines set forth by any applicable organization is punishable at the discretion of the WMFO Executive Board.', DEFAULT, DEFAULT);
