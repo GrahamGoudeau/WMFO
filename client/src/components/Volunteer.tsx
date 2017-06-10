@@ -239,7 +239,7 @@ export class DJVolunteer extends Component<{}, VolunteerState> {
 
     render() {
         const options = (
-            <ul style={{
+            <ul className="navbar" style={{
                 marginTop: '5%',
                 marginBottom: '2%',
             }}>

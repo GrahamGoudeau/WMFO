@@ -357,7 +357,7 @@ export class AddUsers extends Component<{}, AddUsersState> {
         });
         return (
             <div>
-                <ul style={{
+                <ul className="navbar" style={{
                     marginTop: '5%',
                     marginBottom: '2%',
                 }}>
