@@ -46,7 +46,7 @@ export class ManageUsers extends Component<{}, ManageUsersState> {
                 <p>Email: {user.email}</p>
                 <p>User ID: {user.id}</p>
                 <p>User Name: {user.firstName} {user.lastName}</p>
-                <p>Shows hosted: {user.numShowsHosted}</p>
+                <p>Shows Hosted: {user.numShowsHosted}</p>
                 <p>Confirmed Volunteer Hours: {user.confirmedVolunteerHours}</p>
                 {user.pendingVolunteerHours > 0 ? <p>Pending Volunteer Hours: {user.pendingVolunteerHours}</p> : null}
                 <p>Permissions: {user.permissionLevels} (<a href="javascript:void(0);">Edit</a>)</p>
