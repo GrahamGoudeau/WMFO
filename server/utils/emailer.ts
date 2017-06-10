@@ -45,7 +45,8 @@ class ProdEmailer extends Emailer {
 
     private readonly templates = {
         registerNotification: this.compileFromTemplateSource('registerNotification'),
-        showRequestSubmission: this.compileFromTemplateSource('showRequestSubmission'),
+        showRequestSubmissionDJ: this.compileFromTemplateSource('showRequestSubmissionDJ'),
+        showRequestSubmissionExec: this.compileFromTemplateSource('showRequestSubmissionExec'),
     };
 
     // returns a list of the email addresses that failed to send
@@ -95,16 +96,26 @@ class ProdEmailer extends Emailer {
 
     async showRequestSubmission(recipients: string[], showName: HTMLEscapedString): Promise<void> {
         const self = this;
+        const subject = "WMFO Show Request Submitted";
         const optionsArr = recipients.map((recipient: string) => {
             const mailOptions = {
                 from: CONFIG.getStringConfig("MAIL_USER"),
                 to: recipient,
-                subject: "WMFO Show Request Submitted",
-                html: self.templates.showRequestSubmission({
+                subject: subject,
+                html: self.templates.showRequestSubmissionDJ({
                     showName: showName.value
                 }),
             };
             return mailOptions;
+        });
+        optionsArr.push({
+            from: CONFIG.getStringConfig("MAIL_USER"),
+            to: CONFIG.getStringConfig("MAIL_USER"),
+            subject: subject,
+            html: self.templates.showRequestSubmissionExec({
+                showName: showName.value,
+                domainName: CONFIG.getStringConfig("DOMAIN_NAME"),
+            }),
         });
         await this.sendMultipleMail(optionsArr);
     }
