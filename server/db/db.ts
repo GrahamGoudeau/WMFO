@@ -320,7 +320,7 @@ class ExecBoardManagement extends ActionManagement {
             });
         });
 
-        const data = await this.db.tx(t => {
+        return await this.db.tx(t => {
             return t.any(this.queries.deleteAllPermissions, [updatedPermissions.communityMemberId])
                 .then((deleteData: any[]) => {
                     if (deleteData.length > 0) {
@@ -332,7 +332,7 @@ class ExecBoardManagement extends ActionManagement {
     }
 
     async toggleMemberActive(id: number): Promise<boolean> {
-        return this.db.one(this.queries.toggleMemberActive, [id], (a: { active: boolean }) => a.active);
+        return await this.db.one(this.queries.toggleMemberActive, [id], (a: { active: boolean }) => a.active);
     }
 
     async addPendingMembers(pendingMembers: PendingCommunityMember[]): DBAsyncResult<{ email: string, code: string }[]> {
