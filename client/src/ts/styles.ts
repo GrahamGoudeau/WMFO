@@ -69,4 +69,21 @@ export default class WMFOStyles {
         marginTop: "2%",
         marginRight: "2%",
     };
+    static readonly BOX_STYLE = {
+        color: '#333',
+        backgroundColor: '#fefefe',
+        borderRadius: '7px',
+        padding: '1%',
+        marginTop: '2%',
+        marginBottom: '1%',
+        textAlign: 'center',
+    };
+    static readonly TABLE_STYLE = {
+        tableLayout: "fixed",
+        backgroundColor: '#fefefe',
+        borderRadius: '7px',
+        width: '100%',
+        textAlign: 'center',
+        padding: '1%',
+    };
 }
