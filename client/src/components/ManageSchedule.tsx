@@ -386,10 +386,6 @@ export class ManageSchedule extends Component<{}, ManageScheduleState> {
         await this.updateStateAsync("semesterManaging", nextSemesterResult);
     }
 
-    private onAddShow(request: ShowRequest, newShowId: number): void {
-        console.log("callback", newShowId);
-    }
-
     render() {
         const navigatorStyle = {
             margin: "0 auto",
