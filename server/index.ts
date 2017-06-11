@@ -161,6 +161,12 @@ const signAgreement: SecureRouteBuilder =
                                                ALL_PERMISSIONS)
     .setHttpMethod(HttpMethod.POST);
 
+const getAllVolunteerHoursBySemester: SecureRouteBuilder =
+    <SecureRouteBuilder>new SecureRouteBuilder('/api/exec/getAllVolunteerHoursBySemester',
+                                               Exec_api.handleGetAllVolunteerHoursBySemester,
+                                               EXEC_BOARD_PERMISSIONS)
+    .setHttpMethod(HttpMethod.POST);
+
 const loginRoute: InsecureRoute = new InsecureRoute(loginRouteBuilder);
 const registerRoute: InsecureRoute = new InsecureRoute(registerRouteBuilder);
 const logHoursRoute: SecureRoute = new SecureRoute(logHoursBuilder);
@@ -198,6 +204,7 @@ const secureRoutes: SecureRoute[] = [
     new SecureRoute(deleteShowRequest),
     new SecureRoute(getMostRecentAgreement),
     new SecureRoute(signAgreement),
+    new SecureRoute(getAllVolunteerHoursBySemester),
 ];
 
 routeManager.addInsecureRoutes(insecureRoutes);

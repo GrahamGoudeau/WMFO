@@ -8,6 +8,7 @@ import WMFOStyles from "../ts/styles";
 import { Semester, SemesterResult, getThisSemester, getSemesterOffset } from "../ts/semester";
 import { dateToHumanReadable } from "../ts/onClickUtils";
 import * as ReactModal from "react-modal";
+import { SemesterSelector } from "./SemesterSelector";
 
 const TABLE_STYLE = Object.assign({}, WMFOStyles.TABLE_STYLE, {
     marginTop: "3%",
@@ -402,26 +403,7 @@ export class ManageSchedule extends Component<{}, ManageScheduleState> {
         }
         return (
             <div>
-                <div style={WMFOStyles.BOX_STYLE}>
-                    <p>
-                        <a href="javascript:void(0)" style={{float: "left", paddingLeft: "5%"}} onClick={this.prevSemester.bind(this)}>Prev Semester</a>
-                        Managing {`${this.state.semesterManaging.semester} ${this.state.semesterManaging.year}`}
-                        <a href="javascript:void(0)" style={{float: "right", paddingRight: "5%"}} onClick={this.nextSemester.bind(this)}>Next Semester</a>
-                    </p>
-                    <p>Go to:
-                        <select style={navigatorStyle} value={this.state.goToSemester} onChange={(e: any) => this.updateStateAsync("goToSemester", e.target.value)}>
-                            <option>SPRING</option>
-                            <option>SUMMER</option>
-                            <option>FALL</option>
-                        </select>
-                        <select style={navigatorStyle} value={this.state.goToYear} onChange={(e: any) => this.updateStateAsync("goToYear", e.target.value)}>
-                            {yearOptions}
-                        </select>
-                        <button onClick={_ => this.updateStateAsync("semesterManaging", { semester: this.state.goToSemester, year: parseInt(this.state.goToYear as any) })} style={buttonStyle}>
-                            Go
-                        </button>
-                    </p>
-                </div>
+                <SemesterSelector onSemesterChange={(newSemester: SemesterResult) => this.updateState("semesterManaging", newSemester)}/>
                 <Schedule semesterManaging={this.state.semesterManaging}/>
                 <ShowRequests onAddShow={AddShowListener.getInstance().showRequestApproved.bind(AddShowListener.getInstance())} semesterManaging={this.state.semesterManaging}/>
             </div>
