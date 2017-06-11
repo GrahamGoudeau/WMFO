@@ -1,6 +1,6 @@
 import * as React from "react";
 import Maybe from "../ts/maybe";
-import { PermissionLevel, AuthState, CommunityMemberRecord } from "../ts/authState";
+import { EXEC_EMAILS, PermissionLevel, AuthState, CommunityMemberRecord } from "../ts/authState";
 import { dateToHumanReadable } from "../ts/onClickUtils";
 import Component from "./Component";
 import { FormComponent, ErrorState } from "./Form";
@@ -8,7 +8,8 @@ import WMFORequest from "../ts/request";
 import { browserHistory } from "react-router";
 import DatePicker from "react-datepicker";
 import WMFOStyles from "../ts/styles";
-import { SemesterResult, Semester, computeSemester } from "../ts/semester";
+import { getThisSemester, getSemesterOffset, SemesterResult, Semester, computeSemester } from "../ts/semester";
+import { SemesterSelector } from "./SemesterSelector";
 
 interface LogHoursState {
     task: string;
@@ -264,33 +265,60 @@ export class DJVolunteer extends Component<{}, VolunteerState> {
     }
 }
 
+interface AllHoursReport {
+    communityMemberEmail: string;
+    numHours: number;
+}
+
 interface ExecVolunteerReviewState {
     unconfirmedHours: VolunteerHours[];
-    querying: boolean;
+    allHours: AllHoursReport[];
+    queryingPending: boolean;
+    queryingAllHours: boolean;
+    semesterViewing: SemesterResult;
 }
 
 export class ExecVolunteerReview extends Component<{}, ExecVolunteerReviewState> {
     private readonly GET_HOURS_EXEC_URL: string = '/api/exec/getUnconfirmedHours';
     private readonly CONFIRM_HOURS_URL: string = '/api/exec/approveHours';
     private readonly DELETE_HOURS_URL: string = '/api/exec/deleteHours';
+    private readonly GET_ALL_HOURS_URL: string = '/api/exec/getAllVolunteerHoursBySemester';
 
     constructor(props: {}) {
         super(props);
         this.state = {
-            querying: true,
+            queryingPending: true,
+            queryingAllHours: true,
             unconfirmedHours: [],
+            allHours: [],
+            semesterViewing: getThisSemester(),
         };
     }
 
+    async refreshInfo(newSemester: SemesterResult, refreshPending: boolean, refreshAllConfirmed: boolean) {
+        await this.updateStateAsync('semesterViewing', newSemester);
+        const updatedAuth = AuthState.getInstance().updateState();
+
+        const pending = refreshPending ? updatedAuth
+            .then(_ => WMFORequest.getInstance().GET(this.GET_HOURS_EXEC_URL))
+            .then(response => this.updateStateAsync('unconfirmedHours', response.data))
+            .then(_ => this.updateStateAsync('queryingPending', false))
+        : null;
+
+        const allHours = refreshAllConfirmed ? updatedAuth
+            .then(_ => WMFORequest.getInstance().POST(this.GET_ALL_HOURS_URL, {
+                semester: this.state.semesterViewing.semester,
+                year: this.state.semesterViewing.year,
+            }))
+            .then(response => this.updateStateAsync('allHours', response.data))
+            .then(_ => this.updateStateAsync('queryingAllHours', false))
+        : null;
+
+        Promise.all([pending, allHours]).catch(e => console.log("exception:", e));
+    }
+
     async componentDidMount() {
-        await AuthState.getInstance().updateState();
-        try {
-            const response = await WMFORequest.getInstance().GET(this.GET_HOURS_EXEC_URL);
-            await this.updateStateAsync('unconfirmedHours', response.data);
-        } catch (e) {
-            console.log('error:', e);
-        }
-        await this.updateStateAsync('querying', false);
+        this.refreshInfo(this.state.semesterViewing, true, true);
     }
 
     private async resolveHours(id: number, toDelete: boolean) {
@@ -313,7 +341,6 @@ export class ExecVolunteerReview extends Component<{}, ExecVolunteerReviewState>
     }
 
     render() {
-        if (this.state.querying) return null;
         const style = {
             color: '#333',
             backgroundColor: '#fefefe',
@@ -322,13 +349,11 @@ export class ExecVolunteerReview extends Component<{}, ExecVolunteerReviewState>
             marginTop: '2%',
             textAlign: 'center',
             overflow: 'scroll',
+            marginBottom: '2%',
             width: '100%',
         };
-        if (this.state.unconfirmedHours.length === 0) {
-            return <p style={style}>No pending hours.</p>
-        }
 
-        const rows = this.state.unconfirmedHours
+        const pendingRows = this.state.unconfirmedHours
             .sort(volunteerDateComparator)
             .map((hours: VolunteerHours) =>
                 (<tr>
@@ -343,8 +368,23 @@ export class ExecVolunteerReview extends Component<{}, ExecVolunteerReviewState>
                         <a href="javascript:void(0);" onClick={e => this.resolveHours(hours.id, true)}>Delete</a></td>
                 </tr>));
 
-        return (
-            <div style={{width: '100%', overflow: 'scroll'}}>
+        const allHoursRows = this.state.allHours
+            .filter(h => EXEC_EMAILS.indexOf(h.communityMemberEmail) === -1)
+            .sort((h1, h2) => h2.numHours - h1.numHours)
+            .map(hours => (
+                <tr>
+                    <td>{hours.communityMemberEmail}</td>
+                    <td>{hours.numHours}</td>
+                </tr>));
+
+        let pendingHours;
+
+        if (this.state.queryingPending) {
+            pendingHours = <p style={style}>Loading...</p>
+        } else if (this.state.unconfirmedHours.length === 0) {
+            pendingHours = <p style={style}>No pending hours.</p>
+        } else {
+            pendingHours = (
                 <table style={Object.assign({}, style, {tableLayout: 'fixed'})}>
                     <h3>Hours Pending Approval:</h3>
                     <hr/>
@@ -356,8 +396,36 @@ export class ExecVolunteerReview extends Component<{}, ExecVolunteerReviewState>
                         <th>Description of task</th>
                         <th>Confirm?</th>
                     </tr>
-                    {rows}
+                    {pendingRows}
                 </table>
+            );
+        }
+
+        let allHours;
+
+        if (this.state.queryingAllHours) {
+            allHours = <p style={style}>Loading...</p>
+        } else if (this.state.allHours.length === 0) {
+            allHours = <p style={style}>No hours reported yet.</p>
+        } else {
+            allHours = <div>
+                <SemesterSelector semesterInit={this.state.semesterViewing} onSemesterChange={newSem => this.refreshInfo(newSem, false, true)}/>
+                <table style={Object.assign({}, WMFOStyles.TABLE_STYLE, { })}>
+                    <h3>Hours By Semester</h3>
+                    <hr/>
+                    <tr>
+                        <th>Email</th>
+                        <th>Cumulative Hours in {this.state.semesterViewing.semester} {this.state.semesterViewing.year}</th>
+                    </tr>
+                    {allHoursRows}
+                </table>
+            </div>;
+        }
+
+        return (
+            <div style={{width: '100%', overflow: 'scroll'}}>
+                {pendingHours}
+                {allHours}
             </div>
         );
     }
