@@ -222,7 +222,7 @@ class DJManagement extends ActionManagement {
                     return t.none(this.pgp.helpers.insert(insertInfo, this.columnSets.addShowRequestOwners));
                 });
 
-            return Promise.all([submitPromise, addOwners]);
+            return t.batch([submitPromise, addOwners]);
         });
         return data[0]; // the id of the show
     }
@@ -467,7 +467,7 @@ class ExecBoardManagement extends ActionManagement {
                 });
                 return t.none(this.pgp.helpers.insert(insertInfo, this.columnSets.addShowOwners));
             });
-            return Promise.all([createShowPromise, createSchedulePromise, addOwnersPromise]);
+            return t.batch([createShowPromise, createSchedulePromise, addOwnersPromise]);
         });
         return data[0];
     }
