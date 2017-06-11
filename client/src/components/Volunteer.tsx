@@ -8,6 +8,7 @@ import WMFORequest from "../ts/request";
 import { browserHistory } from "react-router";
 import DatePicker from "react-datepicker";
 import WMFOStyles from "../ts/styles";
+import { SemesterResult, Semester, computeSemester } from "../ts/semester";
 
 interface LogHoursState {
     task: string;
@@ -55,10 +56,13 @@ class LogHours extends FormComponent<{}, LogHoursState> {
     async handleSubmit(e: any) {
         e.preventDefault();
         try {
+            const semesterResult = computeSemester(new Date(this.state.date));
             const response = await WMFORequest.getInstance().POST(this.SUBMIT_URL, {
                 volunteerDate: this.state.date,
                 numHours: this.state.numHours + (this.state.numMinutes / 60),
                 description: this.state.description,
+                semester: semesterResult.semester,
+                year: semesterResult.year,
             });
 
             await this.updateStateAsync('error', false);

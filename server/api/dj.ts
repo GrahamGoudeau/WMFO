@@ -16,17 +16,29 @@ export async function handleLogHours(req: express.Request,
     const body: { volunteerDate: string, // string in mm/dd/yyyy format
                   numHours: number,
                   description: string,
+                  semester: Semester,
+                  year: number,
     } = req.body;
-    body.numHours = parseFloat(req.body.numHours as string);
+
+    try {
+        body.numHours = parseFloat(req.body.numHours as string);
+        body.year = parseInt(body.year as any);
+    } catch (e) {
+        badRequest(res);
+        return;
+    }
+
     if (!validateKeys(body, {
             volunteerDate: COMMON_FIELD_SHAPES.dateString,
             numHours: COMMON_FIELD_SHAPES.nonnegativeNum,
-            description: COMMON_FIELD_SHAPES.nonemptyString })) {
+            description: COMMON_FIELD_SHAPES.nonemptyString,
+            semester: COMMON_FIELD_SHAPES.semester,
+            year: COMMON_FIELD_SHAPES.nonnegativeNum })) {
         badRequest(res);
         return;
     }
     try {
-        await db.dj.logVolunteerHours(new Date(body.volunteerDate), body.numHours, new HTMLEscapedString(body.description), authToken.id);
+        await db.dj.logVolunteerHours(new Date(body.volunteerDate), body.numHours, new HTMLEscapedString(body.description), authToken.id, body.semester, body.year);
         log.INFO(authToken.email, 'reporting', body.numHours, 'of volunteer hours');
         successResponse(res);
     } catch (e) {

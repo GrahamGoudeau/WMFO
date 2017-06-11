@@ -5,19 +5,16 @@ export interface SemesterResult {
     year: number;
 }
 
-export function getThisSemester(): SemesterResult {
-    const today = new Date();
+export function computeSemester(date: Date): SemesterResult {
     const springSemesterBegin = 0; // January is 0
     const summerSemesterBegin = 5;
     const fallSemesterBegin = 8;
 
-    const thisMonth = today.getMonth();
-    const thisYear = today.getFullYear();
-
+    const month = date.getMonth();
     let semester: Semester;
-    if (thisMonth < summerSemesterBegin) {
+    if (month < summerSemesterBegin) {
         semester = "SPRING";
-    } else if (thisMonth < fallSemesterBegin) {
+    } else if (month < fallSemesterBegin) {
         semester = "SUMMER";
     } else {
         semester = "FALL";
@@ -25,8 +22,13 @@ export function getThisSemester(): SemesterResult {
 
     return {
         semester: semester,
-        year: thisYear
-    };
+        year: date.getFullYear(),
+    }
+}
+
+export function getThisSemester(): SemesterResult {
+    const today = new Date();
+    return computeSemester(today);
 }
 
 export function getSemesterOffset(fromSemester: SemesterResult, numSemesters: number): SemesterResult {

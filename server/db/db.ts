@@ -292,8 +292,8 @@ class DJManagement extends ActionManagement {
         return member;
     }
 
-    async logVolunteerHours(volunteerDate: Date, numHours: number, description: HTMLEscapedString, id: number): Promise<void> {
-        await this.db.none(this.queries.logVolunteerHours, [volunteerDate, numHours, description.value, id]);
+    async logVolunteerHours(volunteerDate: Date, numHours: number, description: HTMLEscapedString, id: number, semester: Semester, year: number): Promise<void> {
+        await this.db.none(this.queries.logVolunteerHours, [volunteerDate, numHours, description.value, id, semester, year]);
     }
 
     async findById(id: number): DBAsyncResult<CommunityMemberRecord> {

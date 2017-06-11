@@ -197,7 +197,9 @@ CREATE TABLE volunteer_hours_t (
     description TEXT CHECK (COALESCE(description, '') <> ''),
     confirmed BOOLEAN NOT NULL DEFAULT FALSE,
     community_member_id INTEGER REFERENCES community_members_t(id) NOT NULL,
-    deleted BOOLEAN NOT NULL DEFAULT FALSE
+    deleted BOOLEAN NOT NULL DEFAULT FALSE,
+    semester semester_e NOT NULL,
+    year INTEGER NOT NULL CHECK (year > 2000)
 );
 
 CREATE VIEW all_user_info_v AS (
