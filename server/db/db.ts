@@ -377,6 +377,7 @@ class ExecBoardManagement extends ActionManagement {
         createShow: QueryFile,
         deleteShow: QueryFile,
         createShowSchedule: QueryFile,
+        getAllVolunteerHoursBySemester: QueryFile,
     };
     protected readonly columnSets: {
         addPendingMembers: pgpLib.ColumnSet,
@@ -405,6 +406,7 @@ class ExecBoardManagement extends ActionManagement {
             createShow: this.buildSql('queries/createShow.sql'),
             createShowSchedule: this.buildSql('queries/createShowSchedule.sql'),
             deleteShow: this.buildSql('queries/deleteShow.sql'),
+            getAllVolunteerHoursBySemester: this.buildSql('queries/getAllVolunteerHoursBySemester.sql'),
         };
         this.columnSets = {
             addPendingMembers: this.buildColumnSet(['email'], 'pending_community_members_t'),
@@ -424,6 +426,15 @@ class ExecBoardManagement extends ActionManagement {
 
     async deletePendingMember(code: string): Promise<void> {
         await this.db.none(this.queries.deletePendingMember, [code]);
+    }
+
+    async getAllVolunteerHoursBySemester(semester: Semester, year: number): Promise<{ communityMemberEmail: string, numHours: number }[]> {
+        return this.db.map(this.queries.getAllVolunteerHoursBySemester, [semester, year], (record: any) => {
+            return {
+                communityMemberEmail: record.email,
+                numHours: record.num_hours,
+            };
+        });
     }
 
     async changePermissions(updatedPermissions: UpdatedPermissions): Promise<void> {

@@ -112,6 +112,36 @@ export async function handleDeleteShowRequest(req: express.Request,
     successResponse(res);
 }
 
+export async function handleGetAllVolunteerHoursBySemester(req: express.Request,
+                                                           res: express.Response,
+                                                           authToken: AuthToken): Promise<void> {
+    const body: { semester: Semester, year: number } = req.body;
+    if (!body) {
+        badRequest(res);
+        return;
+    }
+    try {
+        body.year = parseInt(body.year as any);
+    } catch (e) {
+        badRequest(res);
+        return;
+    }
+
+    if (!validateKeys(body, { semester: COMMON_FIELD_SHAPES.semester, year: COMMON_FIELD_SHAPES.nonnegativeNum })) {
+        badRequest(res);
+        return;
+    }
+
+    try {
+        const result = await db.exec.getAllVolunteerHoursBySemester(body.semester, body.year);
+        jsonResponse(res, result);
+    } catch (e) {
+        log.ERROR('could not get volunteer hours in', body.semester, body.year);
+        badRequest(res, 'DB_ERROR');
+    }
+    return;
+}
+
 export async function handleGetScheduleBySemester(req: express.Request,
                                                   res: express.Response,
                                                   authToken: AuthToken): Promise<void> {
