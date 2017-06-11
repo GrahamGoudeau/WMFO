@@ -1,7 +1,7 @@
 import * as express from 'express';
 import Logger from '../utils/logger';
 import DB from '../db/db';
-import { VolunteerHours, CommunityMemberRecord, DBResult } from '../db/db';
+import { Agreement, VolunteerHours, CommunityMemberRecord, DBResult } from '../db/db';
 import { HTMLEscapedString, COMMON_FIELD_SHAPES, validateKeys } from '../utils/functionalUtils';
 import { badJson, Semester, DayOfWeek, AuthToken, PermissionLevel, ResponseMessage, badRequest, jsonResponse, successResponse } from '../utils/requestUtils';
 import { buildAuthToken, hashPassword } from '../utils/security';
@@ -36,6 +36,33 @@ export async function handleLogHours(req: express.Request,
     }
 }
 
+export async function handleSignAgreement(req: express.Request,
+                                          res: express.Response,
+                                          authToken: AuthToken): Promise<void> {
+    const body: { agreementId: number } = req.body;
+    try {
+        body.agreementId = parseInt(body.agreementId as any);
+    } catch (e) {
+        badRequest(res);
+        return;
+    }
+
+    if (!validateKeys(body, { agreementId: COMMON_FIELD_SHAPES.nonnegativeNum })) {
+        badRequest(res);
+        return;
+    }
+
+    try {
+        await db.dj.signAgreement(body.agreementId, authToken.id);
+    } catch (e) {
+        log.ERROR("could not sign most recent agreement", e);
+        badRequest(res, 'DB_ERROR');
+        return;
+    }
+    log.INFO(authToken.email, "signed the most recent DJ agreement");
+    successResponse(res);
+}
+
 export async function handleGetIdFromEmail(req: express.Request,
                                            res: express.Response,
                                            authToken: AuthToken): Promise<void> {
@@ -60,6 +87,19 @@ export async function handleGetIdFromEmail(req: express.Request,
         return;
     }
 }
+
+export async function handleGetMostRecentAgreement(req: express.Request,
+                                                   res: express.Response,
+                                                   authToken: AuthToken): Promise<void> {
+    try {
+        const agreement: Agreement = await db.dj.getMostRecentAgreement();
+        jsonResponse(res, agreement);
+    } catch (e) {
+        log.ERROR('could not get most recent agreement', e);
+        badRequest(res, 'DB_ERROR');
+    }
+}
+
 export async function handleSubmitShowRequest(req: express.Request,
                                               res: express.Response,
                                               authToken: AuthToken): Promise<void> {

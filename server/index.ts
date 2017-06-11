@@ -150,6 +150,17 @@ const deleteShowRequest: SecureRouteBuilder =
                                                EXEC_BOARD_PERMISSIONS)
     .setHttpMethod(HttpMethod.POST);
 
+const getMostRecentAgreement: SecureRouteBuilder =
+    <SecureRouteBuilder>new SecureRouteBuilder('/api/dj/getMostRecentAgreement',
+                                               DJ_api.handleGetMostRecentAgreement,
+                                               ALL_PERMISSIONS);
+
+const signAgreement: SecureRouteBuilder =
+    <SecureRouteBuilder>new SecureRouteBuilder('/api/dj/signAgreement',
+                                               DJ_api.handleSignAgreement,
+                                               ALL_PERMISSIONS)
+    .setHttpMethod(HttpMethod.POST);
+
 const loginRoute: InsecureRoute = new InsecureRoute(loginRouteBuilder);
 const registerRoute: InsecureRoute = new InsecureRoute(registerRouteBuilder);
 const logHoursRoute: SecureRoute = new SecureRoute(logHoursBuilder);
@@ -185,6 +196,8 @@ const secureRoutes: SecureRoute[] = [
     new SecureRoute(addShowToSchedule),
     new SecureRoute(deleteShow),
     new SecureRoute(deleteShowRequest),
+    new SecureRoute(getMostRecentAgreement),
+    new SecureRoute(signAgreement),
 ];
 
 routeManager.addInsecureRoutes(insecureRoutes);
