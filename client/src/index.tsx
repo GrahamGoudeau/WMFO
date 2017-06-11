@@ -18,6 +18,7 @@ import { PermissionLevel, CommunityMemberRecord, AuthState, EXEC_BOARD_PERMISSIO
 import WMFORequest from "./ts/request";
 import Maybe from "./ts/maybe";
 import WMFOStyles from "./ts/styles";
+import { Agreement } from "./components/Agreement";
 
 interface AppState {
     user: Maybe<CommunityMemberRecord>;
@@ -62,9 +63,10 @@ class App extends React.Component<{}, AppState> {
             <div>
                 <li><Link to="/show_form">Request Show Form</Link></li>
                 <li><Link to="/volunteer_hours">Volunteer Hours</Link></li>
-                <li><Link to="/links">Important Links</Link></li>
+                <li><Link to="/dj_agreement">DJ Agreement</Link></li>
             </div>
         );
+        // <li><Link to="/manage_dj_agreement">Manage DJ Agreement</Link></li>
         const execNavbar = (
             <div>
                 <li><Link to="/add_users">Add Users</Link></li>
@@ -139,6 +141,8 @@ ReactDOM.render((
             <Route path="/pending_members" component={PendingMembers}/>
             <Route path="/add_users" component={AddUsers}/>
             <Route path="/manage_users" component={ManageUsers}/>
+            <Route path="/dj_agreement" component={Agreement}/>
+            <Route path="/manage_dj_agreement" component={null}/>
             <Route path="/show_form" component={ShowForm}/>
             <Route path="/volunteer_hours" component={DJVolunteer}/>
             <Route path="/manage_schedule" component={ManageSchedule}/>

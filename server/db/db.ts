@@ -101,6 +101,12 @@ export interface ShowRequest {
     hostEmails: string[];
 }
 
+export interface Agreement {
+    agreementText: string;
+    dateCreated: Date;
+    id: number;
+}
+
 export type DBResult<T> = Either<ResponseMessage, T>;
 export type DBAsyncResult<T> = Promise<DBResult<T>>;
 
@@ -135,6 +141,8 @@ class DJManagement extends ActionManagement {
         findMembersProhibitedFromRequestingShow: QueryFile,
         getIdFromEmail: QueryFile,
         findEmailsByIds: QueryFile,
+        getMostRecentAgreement: QueryFile,
+        signAgreement: QueryFile,
     };
     protected readonly columnSets: {
         addManyPermissions: pgpLib.ColumnSet,
@@ -162,6 +170,8 @@ class DJManagement extends ActionManagement {
             findMembersProhibitedFromRequestingShow: this.buildSql('queries/findMembersProhibitedFromRequestingShow.sql'),
             getIdFromEmail: this.buildSql('queries/getIdFromEmail.sql'),
             findEmailsByIds: this.buildSql('queries/findEmailsByIds.sql'),
+            getMostRecentAgreement: this.buildSql('queries/getMostRecentAgreement.sql'),
+            signAgreement: this.buildSql('queries/signAgreement.sql'),
         };
         this.columnSets = {
             addManyPermissions: this.buildColumnSet(['community_member_id', 'permission_level'], 'permission_level_t'),
@@ -172,6 +182,19 @@ class DJManagement extends ActionManagement {
 
     async changePassword(communityMemberId: number, newPasswordHash: HashedPassword): Promise<void> {
         await this.db.none(this.queries.changePassword, [newPasswordHash.value, communityMemberId]);
+    }
+
+    async getMostRecentAgreement(): Promise<Agreement> {
+        const data = await this.db.one(this.queries.getMostRecentAgreement);
+        return {
+            agreementText: data.agreement_text,
+            dateCreated: data.date_created,
+            id: data.id,
+        };
+    }
+
+    async signAgreement(agreementId: number, communityMemberId: number): Promise<void> {
+        await this.db.none(this.queries.signAgreement, [agreementId, communityMemberId]);
     }
 
     async getIdFromEmail(email: string): Promise<number> {
