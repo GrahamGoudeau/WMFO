@@ -22,6 +22,8 @@ interface ManageUsersState {
     modalOpen: boolean;
     modalContents: JSX.Element;
     showDisabled: boolean;
+    showCommunityDJs: boolean;
+    showStudentDJs: boolean;
 };
 
 export class ManageUsers extends Component<{}, ManageUsersState> {
@@ -36,6 +38,8 @@ export class ManageUsers extends Component<{}, ManageUsersState> {
             modalOpen: false,
             modalContents: null,
             showDisabled: false,
+            showCommunityDJs: true,
+            showStudentDJs: true,
         };
     }
 
@@ -57,6 +61,8 @@ export class ManageUsers extends Component<{}, ManageUsersState> {
             querying: false,
             users: this.state.users,
             emailFilter: this.state.emailFilter,
+            showCommunityDJs: this.state.showCommunityDJs,
+            showStudentDJs: this.state.showStudentDJs,
             nameFilter: this.state.nameFilter,
             showDisabled: this.state.showDisabled,
             modalOpen: true,
@@ -116,9 +122,11 @@ export class ManageUsers extends Component<{}, ManageUsersState> {
         //if (this.state.querying) return null;
 
         const userList = this.state.querying ? null : this.state.users
-            .filter((user: AllUserInfo) => this.state.showDisabled || user.active)
-            .filter((user: AllUserInfo) => EXEC_EMAILS.indexOf(user.email) === -1)
-            .filter((user: AllUserInfo) =>
+            .filter(user => this.state.showDisabled || user.active)
+            .filter(user => this.state.showCommunityDJs || user.permissionLevels.indexOf('COMMUNITY_DJ') === -1)
+            .filter(user => this.state.showStudentDJs || user.permissionLevels.indexOf('STUDENT_DJ') === -1)
+            .filter(user => EXEC_EMAILS.indexOf(user.email) === -1)
+            .filter(user =>
                 this.state.emailFilter.length === 0 ||
                     user.email.indexOf(this.state.emailFilter) !== -1)
             .filter((user: AllUserInfo) =>
@@ -142,7 +150,11 @@ export class ManageUsers extends Component<{}, ManageUsersState> {
                     <br/>
                     Filter by name: <input type="text" onChange={this.handleNameFilterChange.bind(this)} value={this.state.nameFilter}/>
                     <br/>
-                    Show disabled users: <input type="checkbox" onChange={(_: any) => this.updateState('showDisabled', !this.state.showDisabled)} checked={this.state.showDisabled}/>
+                    Show non-active users: <input type="checkbox" onChange={(_: any) => this.updateState('showDisabled', !this.state.showDisabled)} checked={this.state.showDisabled}/>
+                    <br/>
+                    Show community DJs: <input type="checkbox" onChange={(_: any) => this.updateState('showCommunityDJs', !this.state.showCommunityDJs)} checked={this.state.showCommunityDJs}/>
+                    <br/>
+                    Show student DJs: <input type="checkbox" onChange={(_: any) => this.updateState('showStudentDJs', !this.state.showStudentDJs)} checked={this.state.showStudentDJs}/>
                     <br/>
                     <button onClick={async _ => {
                         await this.updateStateAsync('emailFilter', '');
